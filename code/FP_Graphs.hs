@@ -63,7 +63,7 @@ dfsEdges gr r = tail visited where --  use tail to throw away fake edge
 
 dfsEdges' (vs, uvs, []) = (vs, uvs, [])
 dfsEdges' (vs, uvs, (e:stack)) = dfsEdges' (vs', uvs', stack') where
-  efn    = edgesFromNode (nd e) uvs  -- edges from current node (target node of current edge)
+  efn    = edgesFromNode (nd e) uvs'  -- edges from current node (target node of current edge)
   stack' = efn ++ (stack\\[e])       -- add the edges to the stack, remove current edge from the rest of the stack to prevent double routing of already visited edges
   vs'    = vs ++ [e]                 -- add current edge to visited list
   uvs'   = uvs \\ [e]                -- remove current edge from unvisited list
