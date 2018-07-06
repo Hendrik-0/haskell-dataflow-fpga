@@ -68,6 +68,41 @@ dfsEdges' (vs, uvs, (e:stack)) = dfsEdges' (vs', uvs', stack') where
   vs'    = vs ++ [e]                 -- add current edge to visited list
   uvs'   = uvs \\ [e]                -- remove current edge from unvisited list
 
+{-
+    A depth-first ordering or edges reachable from a given node.
+    let (unreachable, reachable) = dfs xs root
+    then unreachable and reachable form a partitioning of xs, with
+    the following properties:
+
+    - unreachable is the list of edges of xs that do not lie on
+      any path that starts in root, and only uses edges from xs.
+    - if (a, b), (c, d) are consecutive elements in reachable,
+      then either b == c or there is an edge (x, y) with x == b that preceeds
+      (a, b).
+
+    Note that if edges composes a strongly connected graph, then unreachable is empty
+-}
+dfsHO :: [Edge] -> Label -> ([Edge], [Edge])
+dfsHO edges root
+    = foldl dfs' (ys, []) xs
+    where
+      isOutgoing edge    = ns edge == root
+      (xs, ys)           = partition isOutgoing edges
+      dfs' (es, vs) edge = let (es', path) = dfsHO es (nd edge) in (es', vs ++ edge:path)
+
+{-
+    Same as dfsHO, but now ignoring the orientation of edges
+-}
+dfsU :: [Edge] -> Label -> ([Edge], [Edge])
+dfsU edges root
+    = foldl dfs' (ys, []) xs
+    where
+      incident edge        = ns edge == root || nd edge == root
+      (xs, ys)             = partition incident edges
+      dfs' (es, vs) edge
+        | ns edge == root = let (es', path) = dfsU es (nd edge) in (es', vs ++ edge:path)
+        | otherwise       = let (es', path) = dfsU es (ns edge) in (es', vs ++ edge:path)
+
 
 resultNodes = dfsNodes hsdf 'a'
 resultEdges = dfsEdges hsdf 'a'
