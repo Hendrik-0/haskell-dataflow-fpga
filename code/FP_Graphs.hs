@@ -3,6 +3,7 @@ module FP_Graphs where
 import Data.List
 import qualified Data.Set as S
 import Data.Maybe
+import qualified Data.Map as M
 --import Data.Matrix
 import Debug.Trace as D
 --import LinSolver
@@ -11,38 +12,63 @@ type WCET = Int
 type Label = Char
 
 data Node =   HSDFNode { lb :: Label
-                       , wcet :: Int
+                       , wcet :: Integer
                        }
             | CSDFNode { lb :: Label
-                       , wcetv :: [Int]
+                       , wcetv :: [Integer]
                        } deriving Eq
 
 
 data Edge =   HSDFEdge  { ns :: Label
                         , nd :: Label
-                        , tks :: Int
+                        , tks :: Integer
                         }
             | SDFEdge   { ns :: Label
                         , nd :: Label
-                        , tks :: Int
-                        , pr :: Int
-                        , cr :: Int
+                        , tks :: Integer
+                        , pr :: Integer
+                        , cr :: Integer
                         } 
             | CSDFEdge  { ns :: Label
                         , nd :: Label
-                        , prv :: [Int]
-                        , crv :: [Int]
-                        , tks :: Int
+                        , prv :: [Integer]
+                        , crv :: [Integer]
+                        , tks :: Integer
                         } deriving Eq
 
-data Graph =  Graph { nodes :: [Node]
+-- TODO: make nodes a map: Map Label Node
+data Graph =  Graph { nodes :: M.Map Label Node
                     , edges :: [Edge]
                     } 
+
+class CSDFActor a where
+    wcets :: a -> [Integer]
+    period :: a -> Integer
+
+instance CSDFActor Node where
+    wcets (HSDFNode {wcet = w}) = [w]
+    wcets (CSDFNode {wcetv = ws}) = ws
+    period = fromIntegral . length . wcets
+
+class CSDFChannel a where
+    production :: a -> [Integer]
+    consumption :: a -> [Integer]
+    tokens :: a -> Integer
+
+instance CSDFChannel Edge where
+    production (HSDFEdge {}) = [1]
+    production (SDFEdge {pr = pr}) = [pr]
+    production (CSDFEdge {prv = pr}) = pr
+    consumption (HSDFEdge {}) = [1]
+    consumption (SDFEdge {cr = cr}) = [cr]
+    consumption (CSDFEdge {crv = cr}) = cr
+    tokens = tks
 
 
 edgesFromNode :: Label -> [Edge] -> [Edge]
 edgesFromNode n es = filter (\e -> (ns e) == n) es
 
+{-
 dfsNodes gr r = visited where
   (visited,_,_) = dfsNodes' gr ([], unvisited, [r])
   unvisited = map lb $ nodes gr
@@ -67,6 +93,7 @@ dfsEdges' (vs, uvs, (e:stack)) = dfsEdges' (vs', uvs', stack') where
   stack' = efn ++ (stack\\[e])       -- add the edges to the stack, remove current edge from the rest of the stack to prevent double routing of already visited edges
   vs'    = vs ++ [e]                 -- add current edge to visited list
   uvs'   = uvs \\ [e]                -- remove current edge from unvisited list
+-}
 
 {-
     A depth-first ordering or edges reachable from a given node.
@@ -103,9 +130,6 @@ dfsU edges root
         | ns edge == root = let (es', path) = dfsU es (nd edge) in (es', vs ++ edge:path)
         | otherwise       = let (es', path) = dfsU es (ns edge) in (es', vs ++ edge:path)
 
-
-resultNodes = dfsNodes hsdf 'a'
-resultEdges = dfsEdges hsdf 'a'
 
 
 --csdf2hsdfApprox :: Graph -> Graph
@@ -161,10 +185,10 @@ resultEdges = dfsEdges hsdf 'a'
 --  phaseV = fromIntegral $ length prv
 --  phaseW = fromIntegral $ length crv
 
-sdf  = Graph {nodes = [ HSDFNode {lb = 'I', wcet = 0}
-                      , HSDFNode {lb = '*', wcet = 1}
-                      , HSDFNode {lb = 'f', wcet = 4}
-                      , HSDFNode {lb = 'Z', wcet = 0}
+sdf  = Graph {nodes = M.fromList [('I', HSDFNode {lb = 'I', wcet = 0})
+                      , ('*', HSDFNode {lb = '*', wcet = 1})
+                      , ('f', HSDFNode {lb = 'f', wcet = 4})
+                      , ('Z', HSDFNode {lb = 'Z', wcet = 0})
                       ],
               edges = [ SDFEdge {ns = 'I', nd = '*', pr = 12, cr = 1, tks = 0}
                       , SDFEdge {ns = 'I', nd = '*', pr = 12, cr = 1, tks = 0}
@@ -174,9 +198,10 @@ sdf  = Graph {nodes = [ HSDFNode {lb = 'I', wcet = 0}
                       ]
              }
 
-csdf = Graph {nodes = [ CSDFNode {lb = 'a', wcetv = [2,3]}
-                      , CSDFNode {lb = 'b', wcetv = [2,2]}
-                      , CSDFNode {lb = 'c', wcetv = [3,4]}
+csdf = Graph {nodes = M.fromList 
+                      [ ('a', CSDFNode {lb = 'a', wcetv = [2,3]})
+                      , ('b', CSDFNode {lb = 'b', wcetv = [2,2]})
+                      , ('c', CSDFNode {lb = 'c', wcetv = [3,4]})
                       ],
               edges = [ CSDFEdge {ns = 'a', nd = 'a', prv = [1,1], crv = [1,1], tks = 1}
                       , CSDFEdge {ns = 'a', nd = 'b', prv = [1,2], crv = [1,1], tks = 0}
@@ -187,12 +212,13 @@ csdf = Graph {nodes = [ CSDFNode {lb = 'a', wcetv = [2,3]}
              }
 
 hsdf :: Graph
-hsdf = Graph {nodes = [ HSDFNode {lb = 'a', wcet = 1}
-                    , HSDFNode {lb = 'b', wcet = 1}
-                    , HSDFNode {lb = 'c', wcet = 1}
-                    , HSDFNode {lb = 'd', wcet = 1}
-                    , HSDFNode {lb = 'e', wcet = 1}
-                    , HSDFNode {lb = 'f', wcet = 1}
+hsdf = Graph {nodes = M.fromList
+                    [('a', HSDFNode {lb = 'a', wcet = 1})
+                    ,('b', HSDFNode {lb = 'b', wcet = 1})
+                    ,('c', HSDFNode {lb = 'c', wcet = 1})
+                    ,('d', HSDFNode {lb = 'd', wcet = 1})
+                    ,('e', HSDFNode {lb = 'e', wcet = 1})
+                    ,('f', HSDFNode {lb = 'f', wcet = 1})
                     ],
             edges = [ HSDFEdge {ns = 'a', nd = 'b', tks = 0}
                     , HSDFEdge {ns = 'a', nd = 'c', tks = 0}
