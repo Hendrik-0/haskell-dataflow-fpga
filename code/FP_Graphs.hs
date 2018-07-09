@@ -3,6 +3,7 @@ module FP_Graphs where
 import Data.List
 import qualified Data.Set as S
 import Data.Maybe
+import Data.Ratio
 import qualified Data.Map as M
 --import Data.Matrix
 import Debug.Trace as D
@@ -54,6 +55,8 @@ class CSDFChannel a where
     production :: a -> [Integer]
     consumption :: a -> [Integer]
     tokens :: a -> Integer
+    prate :: a -> Ratio Integer
+    crate :: a -> Ratio Integer
 
 instance CSDFChannel Edge where
     production (HSDFEdge {}) = [1]
@@ -63,6 +66,8 @@ instance CSDFChannel Edge where
     consumption (SDFEdge {cr = cr}) = [cr]
     consumption (CSDFEdge {crv = cr}) = cr
     tokens = tks
+    prate edge = let p = production edge in sum p % (fromIntegral $ length p)
+    crate edge = let c = consumption edge in sum c % (fromIntegral $ length c)
 
 
 edgesFromNode :: Label -> [Edge] -> [Edge]
