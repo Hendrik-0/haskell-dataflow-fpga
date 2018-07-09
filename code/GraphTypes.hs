@@ -86,16 +86,16 @@ sdf  = Graph {nodes = M.fromList [('I', HSDFNode {lb = 'I', wcet = 0})
                       ]
              }
 
-csdf = Graph {nodes = M.fromList 
-                      [ ('a', CSDFNode {lb = 'a', wcetv = [2,3]})
-                      , ('b', CSDFNode {lb = 'b', wcetv = [2,2]})
-                      , ('c', CSDFNode {lb = 'c', wcetv = [3,4]})
+csdf = Graph {nodes = M.fromList    -- modulus = 36
+                      [ ('a', CSDFNode {lb = 'a', wcetv = [2,3]})                           -- q = 4
+                      , ('b', CSDFNode {lb = 'b', wcetv = [2,2]})                           -- q = 6
+                      , ('c', CSDFNode {lb = 'c', wcetv = [3,4]})                           -- q = 6
                       ],
-              edges = [ CSDFEdge {ns = 'a', nd = 'a', prv = [1,1], crv = [1,1], tks = 1}
-                      , CSDFEdge {ns = 'a', nd = 'b', prv = [1,2], crv = [1,1], tks = 0}
-                      , CSDFEdge {ns = 'b', nd = 'a', prv = [2,0], crv = [2,1], tks = 2}
-                      , CSDFEdge {ns = 'b', nd = 'c', prv = [1,2], crv = [2,1], tks = 0}
-                      , CSDFEdge {ns = 'c', nd = 'b', prv = [2,1], crv = [1,2], tks = 3}
+              edges = [ CSDFEdge {ns = 'a', nd = 'a', prv = [1,1], crv = [1,1], tks = 1}    -- weight = 9
+                      , CSDFEdge {ns = 'a', nd = 'b', prv = [1,2], crv = [1,1], tks = 0}    -- weight = 6
+                      , CSDFEdge {ns = 'b', nd = 'a', prv = [2,0], crv = [2,1], tks = 2}    -- weight = 6
+                      , CSDFEdge {ns = 'b', nd = 'c', prv = [1,2], crv = [2,1], tks = 0}    -- weight = 4
+                      , CSDFEdge {ns = 'c', nd = 'b', prv = [2,1], crv = [1,2], tks = 3}    -- weight = 4
                       ]
              }
 

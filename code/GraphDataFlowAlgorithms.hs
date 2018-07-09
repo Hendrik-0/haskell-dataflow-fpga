@@ -6,6 +6,17 @@ import qualified Data.Map as M
 import Data.Ratio
 import Data.Maybe
 
+{-
+    Type classes for CSDF actors / channels in a consistent graph
+-}
+class ConsistentCSDFActor a where
+    firingsPerIteration :: a -> Integer
+
+class ConsistentCSDFChannel a where
+    weight :: a -> Integer
+    -- tokens in optimistic / pessimistic single-rate approximation (RdG: not sure if this is best place for this....)
+    optimisticTokens :: a -> Integer
+    pessimisticTokens :: a -> Integer
 
 {-
     Computes the 'modulus' of the graph, which is the weighted number of tokens produced / consumed
@@ -66,6 +77,21 @@ consistentUpdate mmap edge
 
 
 {-
-    TODO: normalization vector
+    Normalization Vector:
+    this vector assigns every edge a weight, such that, after multiplying the production and
+    consumption rate of each edge with the edge's weight, every actor produces / consumes
+    the same number of tokens per firing, on average, on / from each of its outgoing / incoming edge.
 -}
+normalizationVector graph
+    = [(edge, weight edge) | edge <- edges graph]
+    where
+      q           = repetitionVector graph
+      n           = modulus graph
+      weight edge = numerator x
+                  where
+                    -- Note that we use the destination + crate of edge interchangeably
+                    v       = ns edge
+                    Just qv = M.lookup v q
+                    x       = (n % qv) / prate edge
+
 
