@@ -2,26 +2,45 @@ module GraphAlgorithms where
 
 import GraphTypes
 import Data.List
+import qualified Data.Map as M
 
 edgesFromNode :: Label -> [Edge] -> [Edge]
 edgesFromNode n es = filter (\e -> (ns e) == n) es
 
-{-
-dfsNodesR gr r = visited where
-  (visited,_,_) = dfsNodesR' gr ([], unvisited, [r])
-  unvisited = map lb $ nodes gr
+edgesToNode :: Label -> [Edge] -> [Edge]
+edgesToNode n es = filter (\e -> (nd e) == n) es
 
-dfsNodesR' gr (vs, uvs, []) = (vs, uvs, [])
-dfsNodesR' gr (vs, [] , stack) = (vs,[], stack)
-dfsNodesR' gr (vs, uvs, (n:stack)) 
-  = dfsNodesR' gr (vs', uvs', stack') 
-  where
-    efn    = edgesFromNode n (edges gr)  -- all outgoing edges from current node
-    dcn    = map (nd) efn                -- directly connected nodes
-    dcn'   = dcn \\ vs                   -- remove already visited nodes
-    stack' = dcn' ++ (stack\\[n])        -- add unvisited, reachable nodes to stack, and remove current node from stack
-    vs'    = vs ++ [n]                   -- add current node to visited list
-    uvs'   = uvs \\ [n]                  -- remove current node from unvisited list
+edgesOnNode :: Label -> [Edge] -> [Edge]
+edgesOnNode n es = filter (\e -> (nd e) == n || (ns e) == n) es
+
+{-
+--dfsNodesGUR :: Graph -> [Nodes]
+--dfsNodesGUR gr [] = []
+--dfsNodesGUR gr = 
+--  path ++ dfsNodesGUR gr uvs
+--    where
+--      (path, uvs,_) = dfsNodesR' gr Undirected ([],(e:es), ns e)
+
+dfsNodesR :: Graph -> Label -> [Label]
+dfsNodesR gr r 
+  = visited 
+    where
+      (visited,_,_) = dfsNodesR' Directed gr ([], unvisited, [r])
+      unvisited = M.keys (nodes gr) 
+
+dfsNodesR' :: Graph -> GraphDir -> ([Label],[Label],[Label]) -> ([Label], [Label], [Label])
+dfsNodesR' gr _ (vs, uvs, []) = (vs, uvs, [])
+dfsNodesR' gr _ (vs, [] , stack) = (vs,[], stack)
+dfsNodesR' gr graphDir (vs, uvs, (n:stack)) 
+  = dfsNodesR' gr graphDir (vs', uvs', stack') 
+    where
+      efn   | graphDir == Directed = edgesFromNode n (edges gr)  -- all outgoing edges from current node
+            | otherwise            = edgesOnNode n (edges gr)  -- all outgoing edges from current node
+      dcn    = map (nd) efn                -- directly connected nodes
+      dcn'   = dcn \\ vs                   -- remove already visited nodes
+      stack' = dcn' ++ (stack\\[n])        -- add unvisited, reachable nodes to stack, and remove current node from stack
+      vs'    = vs ++ [n]                   -- add current node to visited list
+      uvs'   = uvs \\ [n]                  -- remove current node from unvisited list
 -}
 
 dfsEdgesR :: Graph -> Label -> [Edge]

@@ -47,3 +47,4 @@ consistentUpdate mmap edge
 {-
     TODO: normalization vector
 -}
+
