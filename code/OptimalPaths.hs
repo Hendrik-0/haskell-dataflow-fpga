@@ -10,6 +10,9 @@ class WeightedEdge a (Eq b) | a -> b where
     source :: a -> b
     target :: a -> b
 
+{-
+    TODO: implement Bellman-Ford (the simplest way, first)
+-}
 longestPaths :: (WeightedEdge a b) -> [a] -> b -> M.Map b a
 longestPaths edges root
     = M.empty
