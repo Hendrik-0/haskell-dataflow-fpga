@@ -51,12 +51,12 @@ class CSDFChannel a where
     crate :: a -> Ratio Integer
 
 instance CSDFChannel Edge where
-    production (HSDFEdge {}) = [1]
-    production (SDFEdge {pr = pr}) = [pr]
-    production (CSDFEdge {prv = pr}) = pr
-    consumption (HSDFEdge {}) = [1]
-    consumption (SDFEdge {cr = cr}) = [cr]
-    consumption (CSDFEdge {crv = cr}) = cr
+    production  (HSDFEdge {      }) = [1]
+    production  ( SDFEdge { pr=pr}) = [pr]
+    production  (CSDFEdge {prv=pr}) = pr
+    consumption (HSDFEdge {      }) = [1]
+    consumption ( SDFEdge { cr=cr}) = [cr]
+    consumption (CSDFEdge {crv=cr}) = cr
     tokens = tks
     prate edge = sum p % (fromIntegral $ length p) where p = production edge
     crate edge = sum p % (fromIntegral $ length p) where p = consumption edge
@@ -66,7 +66,10 @@ instance CSDFChannel Edge where
 
 
 instance Show Edge where
-  show e = [(ns e)] ++ "--->" ++ [(nd e)]
+  --show e = [(ns e)] ++ "--->" ++ [(nd e)]
+  show (HSDFEdge {ns=ns, nd=nd,                   tks=tks}) = [ns] ++               "--" ++ (show tks) ++ "-->"               ++ [nd]
+  show ( SDFEdge {ns=ns, nd=nd,  pr=pr ,  cr=cr , tks=tks}) = [ns] ++ (show pr)  ++ "--" ++ (show tks) ++ "-->" ++ (show cr)  ++ [nd]
+  show (CSDFEdge {ns=ns, nd=nd, prv=prv, crv=crv, tks=tks}) = [ns] ++ (show prv) ++ "--" ++ (show tks) ++ "-->" ++ (show crv) ++ [nd]
 
 instance Show Node where
   show n = [lb n]

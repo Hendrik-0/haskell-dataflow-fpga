@@ -106,3 +106,10 @@ dfsGU (e:es)
       root = ns e
       (es', path) = dfsU (e:es) root
 
+
+{-
+    TODO: Bellman -Ford shortest/longste path
+-}
+
+
+
