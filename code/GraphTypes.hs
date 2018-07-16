@@ -3,6 +3,188 @@ module GraphTypes where
 import qualified Data.Map as M
 import Data.Ratio
 
+
+type Weight = Ratio Integer
+
+data Node = Node Label
+data Edge n = Edge n n
+            | WeightedEdge n n Weight
+
+
+data DFEdge n = HSDFEdge n n Integer
+              |  SDFEdge n n Integer  Integer   Integer
+              | CSDFEdge n n Integer [Integer] [Integer] 
+                deriving Eq
+
+type Label = Char
+
+data DFNode = HSDFNode Label  Integer
+            | CSDFNode Label [Integer]
+
+type DFGraph = Graph (M.Map Label DFNode) ([DFEdge Label]) 
+type WeightedGraph = Graph (M.Map Label Node) ([Edge Label])
+
+data Graph n e = Graph n e
+
+class Graphs g where
+  nodes :: g n e -> n
+  edges :: g n e -> e
+
+instance Graphs Graph where
+  nodes (Graph n _) = n
+  edges (Graph _ e) = e
+
+
+
+class Nodes n where
+  label :: n -> Label
+
+instance Nodes Node where
+  label (Node n) = n
+
+instance Nodes DFNode where
+  label (HSDFNode l _) = l
+  label (CSDFNode l _) = l
+
+
+class (Nodes n) => DFNodes n where
+  wcet :: n -> [Integer]
+  period :: n -> Integer
+
+instance DFNodes DFNode where
+  wcet (HSDFNode _ d) = [d]
+  wcet (CSDFNode _ d) =  d
+  period = fromIntegral . length . wcet
+
+
+class Edges e where
+  source :: e n -> n
+  target :: e n -> n
+
+instance Edges Edge where
+  source (Edge s _) = s 
+  source (WeightedEdge s _ _) = s 
+  target (Edge _ t) = t
+  target (WeightedEdge _ t _) = t
+
+instance Edges DFEdge where
+  source (HSDFEdge s _ _)     = s
+  source ( SDFEdge s _ _ _ _) = s
+  source (CSDFEdge s _ _ _ _) = s
+  target (HSDFEdge _ t _)     = t
+  target ( SDFEdge _ t _ _ _) = t
+  target (CSDFEdge _ t _ _ _) = t
+
+
+class (Edges e) => WeightedEdges e where
+   weight :: e n -> Weight
+
+instance WeightedEdges Edge where
+   weight (WeightedEdge _ _ w) = w
+   weight _                    = 1 -- TODO ?
+
+
+
+class (Edges e) => DFEdges e where
+  tokens :: e n -> Integer
+  production :: e n -> [Integer]
+  consumption :: e n -> [Integer]
+  prate :: e n -> Ratio Integer
+  crate :: e n -> Ratio Integer
+
+instance DFEdges DFEdge where
+  tokens (HSDFEdge _ _ t)     = t
+  tokens ( SDFEdge _ _ t _ _) = t
+  tokens (CSDFEdge _ _ t _ _) = t
+  production  (SDFEdge _ _ _ p _)  = [p]
+  production (CSDFEdge _ _ _ p _)  =  p
+  production _                     = [1]
+  consumption  (SDFEdge _ _ _ _ c) = [c]
+  consumption (CSDFEdge _ _ _ _ c) =  c
+  consumption _                    = [1]
+  prate edge = sum p % (fromIntegral $ length p) where p = production edge
+  crate edge = sum c % (fromIntegral $ length c) where c = consumption edge
+
+instance (Show n) => Show (DFEdge n) where
+  show (HSDFEdge s d t) = (show s) ++ "--" ++ (show t) ++ "-->" ++ (show d)
+  show (SDFEdge s d t pr cr) = (show s) ++ (show pr)  ++ "--" ++ (show t) ++ "-->" ++ (show cr) ++ (show d)
+  show (CSDFEdge s d t prv crv) = (show s) ++ (show prv) ++ "--" ++ (show t) ++ "-->" ++ (show crv) ++ (show d)
+
+instance (Show n) => Show (Edge n) where
+  show (Edge s d) = (show s) ++ "-->" ++ (show d)
+  show (WeightedEdge s d w) = (show s) ++ "--" ++ (show w) ++ "-->" ++ (show d)
+
+
+instance Show Node where
+  show (Node n) = "n"
+
+-- example graphs:
+sdf  = Graph (M.fromList 
+              [ ('I', HSDFNode 'I' 0)
+              , ('*', HSDFNode '*' 1)
+              , ('f', HSDFNode 'f' 4)
+              , ('Z', HSDFNode 'Z' 0)
+              ])
+              ([SDFEdge 'I' '*' 0 12 1
+              , SDFEdge 'I' '*' 0 12 1
+              , SDFEdge '*' 'f' 0 1  4
+              , SDFEdge 'f' 'Z' 0 1  3
+              , SDFEdge 'Z' 'I' 1 1  1
+              ])
+             
+csdf = Graph (M.fromList                      -- modulus = 36
+              [ ('a', CSDFNode 'a' [2,3])         -- q = 4
+              , ('b', CSDFNode 'b' [2,2])         -- q = 6
+              , ('c', CSDFNode 'c' [3,4])         -- q = 6
+              ])
+              ([CSDFEdge 'a' 'a' 1 [1,1] [1,1]    -- weight = 9
+              , CSDFEdge 'a' 'b' 0 [1,2] [1,1]    -- weight = 6
+              , CSDFEdge 'b' 'a' 2 [2,0] [2,1]    -- weight = 6
+              , CSDFEdge 'b' 'c' 0 [1,2] [2,1]    -- weight = 4
+              , CSDFEdge 'c' 'b' 3 [2,1] [1,2]    -- weight = 4
+              ])
+
+hsdf = Graph (M.fromList
+              [('a', HSDFNode 'a' 1)
+              ,('b', HSDFNode 'b' 1)
+              ,('c', HSDFNode 'c' 1)
+              ,('d', HSDFNode 'd' 1)
+              ,('e', HSDFNode 'e' 1)
+              ,('f', HSDFNode 'f' 1)
+              ])
+              ([HSDFEdge 'a' 'b' 0
+              , HSDFEdge 'a' 'c' 0
+              , HSDFEdge 'a' 'd' 0
+              , HSDFEdge 'b' 'e' 0
+              , HSDFEdge 'd' 'e' 0
+              , HSDFEdge 'd' 'f' 0
+              , HSDFEdge 'e' 'f' 0
+              , HSDFEdge 'f' 'b' 0
+              , HSDFEdge 'e' 'c' 0
+              , HSDFEdge 'b' 'a' 0
+              ])
+
+wgraph = Graph (M.fromList
+              [('S', Node 'S')
+              ,('A', Node 'A')
+              ,('B', Node 'B')
+              ,('C', Node 'C')
+              ,('D', Node 'D')
+              ,('E', Node 'E')
+              ])
+              ([WeightedEdge 'S' 'A' 10
+              , WeightedEdge 'S' 'E' 8
+              , WeightedEdge 'E' 'D' 1
+              , WeightedEdge 'D' 'A' (-4)
+              , WeightedEdge 'D' 'C' (-1)
+              , WeightedEdge 'A' 'C' 2
+              , WeightedEdge 'C' 'B' (-2)
+              , WeightedEdge 'B' 'A' 1
+              ])
+{-
+
+data WeightedEdge a = WeightedEdge (a, a) (Ratio Integer)
+
 type Label = Char
 
 data Node =   HSDFNode { lb :: Label
@@ -123,3 +305,4 @@ hsdf = Graph {nodes = M.fromList
                     , HSDFEdge {ns = 'b', nd = 'a', tks = 0}
                     ]
            }
+-}

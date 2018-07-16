@@ -7,18 +7,6 @@ import Data.Ratio
 import Data.Maybe
 
 {-
-    Type classes for CSDF actors / channels in a consistent graph
--}
-class ConsistentCSDFActor a where
-    firingsPerIteration :: a -> Integer
-
-class ConsistentCSDFChannel a where
-    weight :: a -> Integer
-    -- tokens in optimistic / pessimistic single-rate approximation (RdG: not sure if this is best place for this....)
-    optimisticTokens :: a -> Integer
-    pessimisticTokens :: a -> Integer
-
-{-
     Computes the 'modulus' of the graph, which is the weighted number of tokens produced / consumed
     on any channel during a single graph iteration.
     The minimum requirement on the (unknown) edge weights is that the average production/consumption rate,
@@ -26,7 +14,8 @@ class ConsistentCSDFChannel a where
     node firings that go in a single graph iteration), plus this requirement, we can thus calculate per
     node a number of tokens that is an integer multiple of all associated average rates.
 -}
-modulus :: Graph -> Integer
+
+modulus :: DFGraph -> Integer
 modulus graph
     = foldl lcm 1 (M.elems locals)
     where
@@ -36,7 +25,7 @@ modulus graph
       q        = repetitionVector graph
       f m edge = M.insertWith lcm v nv $ M.insertWith lcm w nw m
                where
-                 (v, w)   = (ns edge, nd edge)
+                 (v, w)   = (source edge, target edge)
                  Just qv  = M.lookup v q
                  Just qw  = M.lookup w q
                  (pr, cr) = (prate edge, crate edge)
@@ -46,8 +35,8 @@ modulus graph
 {-
     Repetition Vector for SDF or CSDF graphs
 -}
-repetitionVector :: Graph -> M.Map Label Integer
-repetitionVector (Graph {edges = es, nodes = ns})
+repetitionVector :: DFGraph -> M.Map Label Integer
+repetitionVector (Graph ns es)
     = M.map (numerator . (*l)) fs'
     where
       fs        = repetitionVectorF es
@@ -58,19 +47,20 @@ repetitionVector (Graph {edges = es, nodes = ns})
       mulperiod lbl r = fromIntegral (period rec) * r where Just rec = M.lookup lbl ns
       --mulperiod lbl r = let Just rec = M.lookup lbl ns in fromIntegral (period rec) * r
 
-repetitionVectorF :: [Edge] -> M.Map Label (Ratio Integer)
+repetitionVectorF :: [DFEdge Label] -> M.Map Label (Ratio Integer)
 repetitionVectorF
     = (foldl consistentUpdate M.empty) . dfsGU
 
-consistentUpdate :: M.Map Label (Ratio Integer) -> Edge -> M.Map Label (Ratio Integer)
+
+consistentUpdate :: M.Map Label (Ratio Integer) -> DFEdge Label -> M.Map Label (Ratio Integer)
 consistentUpdate mmap edge
-    | isNothing fs && isNothing fd = ((M.insert (ns edge) 1) . (M.insert (nd edge) r)) mmap
-    | isNothing fs                 = M.insert (ns edge) (rd / r) mmap
-    |                 isNothing fd = M.insert (nd edge) (rs * r) mmap
+    | isNothing fs && isNothing fd = ((M.insert (source edge) 1) . (M.insert (target edge) r)) mmap
+    | isNothing fs                 = M.insert (source edge) (rd / r) mmap
+    |                 isNothing fd = M.insert (target edge) (rs * r) mmap
     | otherwise                    = if rs * r == rd then mmap else error "Inconsistent graph"
     where
-      fs      = M.lookup (ns edge) mmap
-      fd      = M.lookup (nd edge) mmap
+      fs      = M.lookup (source edge) mmap
+      fd      = M.lookup (target edge) mmap
       Just rs = fs
       Just rd = fd
       r       = sum (production edge) % sum (consumption edge)
@@ -82,6 +72,7 @@ consistentUpdate mmap edge
     consumption rate of each edge with the edge's weight, every actor produces / consumes
     the same number of tokens per firing, on average, on / from each of its outgoing / incoming edge.
 -}
+normalizationVector :: DFGraph -> [(DFEdge Label, Integer)]
 normalizationVector graph
     = [(edge, weight edge) | edge <- edges graph]
     where
@@ -90,7 +81,7 @@ normalizationVector graph
       weight edge = numerator x
                   where
                     -- Note that we use the destination + crate of edge interchangeably
-                    v       = ns edge
+                    v       = source edge
                     Just qv = M.lookup v q
                     x       = (n % qv) / prate edge
 
