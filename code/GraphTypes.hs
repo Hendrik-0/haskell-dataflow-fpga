@@ -5,10 +5,14 @@ import Data.Ratio
 
 
 type Weight = Ratio Integer
+type Mark = Integer
+type ParametricDistance = (Mark, Weight)
 
 data Node = Node Label
 data Edge n = Edge n n
             | WeightedEdge n n Weight
+            | WeightedMarkedEdge n n Weight Mark
+              deriving Eq
 
 
 data DFEdge n = HSDFEdge n n Integer
@@ -62,10 +66,12 @@ class Edges e where
   target :: e n -> n
 
 instance Edges Edge where
-  source (Edge s _) = s 
-  source (WeightedEdge s _ _) = s 
-  target (Edge _ t) = t
-  target (WeightedEdge _ t _) = t
+  source (Edge s _)                   = s 
+  source (WeightedEdge s _ _)         = s
+  source (WeightedMarkedEdge s _ _ _) = s
+  target (Edge _ t)                   = t
+  target (WeightedEdge _ t _)         = t
+  target (WeightedMarkedEdge _ t _ _) = t
 
 instance Edges DFEdge where
   source (HSDFEdge s _ _)     = s
@@ -76,12 +82,28 @@ instance Edges DFEdge where
   target (CSDFEdge _ t _ _ _) = t
 
 
+
 class (Edges e) => WeightedEdges e where
    weight :: e n -> Weight
 
 instance WeightedEdges Edge where
-   weight (WeightedEdge _ _ w) = w
-   weight _                    = 1 -- TODO ?
+   weight (WeightedEdge _ _ w)         = w
+   weight (WeightedMarkedEdge _ _ w _) = w
+   weight _                            = 1 -- TODO ? default edge has weight 1
+
+
+
+class (Edges e, WeightedEdges e) => WeightedMarkedEdges e where
+  mark :: e n -> Mark
+  pdistance :: e n -> ParametricDistance
+
+instance WeightedMarkedEdges Edge where
+  mark (WeightedMarkedEdge _ _ _ m) = m
+  mark _                            = 0 -- TODO? marking 0 for Edge and WeightedEdge => no lambdas)
+  pdistance e = (mark e, weight e)
+
+
+
 
 
 
@@ -111,76 +133,31 @@ instance (Show n) => Show (DFEdge n) where
   show (CSDFEdge s d t prv crv) = (show s) ++ (show prv) ++ "--" ++ (show t) ++ "-->" ++ (show crv) ++ (show d)
 
 instance (Show n) => Show (Edge n) where
+  --show e = (show $ source e) ++ "-->" ++ (show $ target e)
   show (Edge s d) = (show s) ++ "-->" ++ (show d)
   show (WeightedEdge s d w) = (show s) ++ "--" ++ (show w) ++ "-->" ++ (show d)
-
+  show e@(WeightedMarkedEdge s d w m) = (show s) ++ "--" ++ (show (pdistance e)) ++ "-->" ++ (show d)
 
 instance Show Node where
-  show (Node n) = "n"
+  show (Node n) = [n]
 
--- example graphs:
-sdf  = Graph (M.fromList 
-              [ ('I', HSDFNode 'I' 0)
-              , ('*', HSDFNode '*' 1)
-              , ('f', HSDFNode 'f' 4)
-              , ('Z', HSDFNode 'Z' 0)
-              ])
-              ([SDFEdge 'I' '*' 0 12 1
-              , SDFEdge 'I' '*' 0 12 1
-              , SDFEdge '*' 'f' 0 1  4
-              , SDFEdge 'f' 'Z' 0 1  3
-              , SDFEdge 'Z' 'I' 1 1  1
-              ])
-             
-csdf = Graph (M.fromList                      -- modulus = 36
-              [ ('a', CSDFNode 'a' [2,3])         -- q = 4
-              , ('b', CSDFNode 'b' [2,2])         -- q = 6
-              , ('c', CSDFNode 'c' [3,4])         -- q = 6
-              ])
-              ([CSDFEdge 'a' 'a' 1 [1,1] [1,1]    -- weight = 9
-              , CSDFEdge 'a' 'b' 0 [1,2] [1,1]    -- weight = 6
-              , CSDFEdge 'b' 'a' 2 [2,0] [2,1]    -- weight = 6
-              , CSDFEdge 'b' 'c' 0 [1,2] [2,1]    -- weight = 4
-              , CSDFEdge 'c' 'b' 3 [2,1] [1,2]    -- weight = 4
-              ])
 
-hsdf = Graph (M.fromList
-              [('a', HSDFNode 'a' 1)
-              ,('b', HSDFNode 'b' 1)
-              ,('c', HSDFNode 'c' 1)
-              ,('d', HSDFNode 'd' 1)
-              ,('e', HSDFNode 'e' 1)
-              ,('f', HSDFNode 'f' 1)
-              ])
-              ([HSDFEdge 'a' 'b' 0
-              , HSDFEdge 'a' 'c' 0
-              , HSDFEdge 'a' 'd' 0
-              , HSDFEdge 'b' 'e' 0
-              , HSDFEdge 'd' 'e' 0
-              , HSDFEdge 'd' 'f' 0
-              , HSDFEdge 'e' 'f' 0
-              , HSDFEdge 'f' 'b' 0
-              , HSDFEdge 'e' 'c' 0
-              , HSDFEdge 'b' 'a' 0
-              ])
 
-wgraph = Graph (M.fromList
-              [('S', Node 'S')
-              ,('A', Node 'A')
-              ,('B', Node 'B')
-              ,('C', Node 'C')
-              ,('D', Node 'D')
-              ,('E', Node 'E')
-              ])
-              ([WeightedEdge 'S' 'A' 10
-              , WeightedEdge 'S' 'E' 8
-              , WeightedEdge 'E' 'D' 1
-              , WeightedEdge 'D' 'A' (-4)
-              , WeightedEdge 'D' 'C' (-1)
-              , WeightedEdge 'A' 'C' 2
-              , WeightedEdge 'C' 'B' (-2)
-              , WeightedEdge 'B' 'A' 1
-              ])
+instance (Ord n) => Ord (Edge n) where
+  compare a b = compare (weight a) (weight b)
+
+
+instance (Num a, Num b) => Num (a,b) where
+   fromInteger a   = (fromInteger a, fromInteger a)
+   (a,b) + (a',b') = (a + a', b + b')
+   (a,b) - (a',b') = (a - a', b - b')
+   (a,b) * (a',b') = (a * a', b * b')
+   negate (a,b)    = (negate a, negate b)
+   abs (a,b)       = (abs a, abs b)
+   signum (a,b)    = (signum a, signum b)
+
+
+
 {-
 
 data WeightedEdge a = WeightedEdge (a, a) (Ratio Integer)

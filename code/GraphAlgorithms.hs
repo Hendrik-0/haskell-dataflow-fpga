@@ -4,6 +4,7 @@ import GraphTypes
 import Data.List
 import qualified Data.Map as M
 import Data.Maybe
+import Data.Ratio
 
 {-
     A depth-first ordering or edges reachable from a given node.
@@ -55,30 +56,47 @@ dfsGU (e:es)
 
 {-
     Bellman -Ford shortest,  TODO: optimize and clean?
+    The map provided by the BellmanFord function contains the distance (weight)
+    to each node from the root, and the traveled path
 -}
-bellmanFord :: WeightedGraph -> Label -> M.Map Label Weight
+bellmanFord 
+  :: WeightedGraph 
+  -> Label 
+  -> M.Map Label (Weight, [Edge Label])
 bellmanFord graph root
 --  = (iterate (bfIteration graph) minit)!!l
   = bellmanFord' graph minit l
     where
-      minit = M.insert root 0 M.empty
+      minit = M.insert root (0,[]) M.empty
       l = length (nodes graph)
 
-bellmanFord' :: WeightedGraph -> M.Map Label Weight -> Int -> M.Map Label Weight
+bellmanFord' 
+  :: WeightedGraph
+  -> M.Map Label (Weight, [Edge Label])
+  -> Int
+  -> M.Map Label (Weight, [Edge Label])
 bellmanFord' graph mmap c | mmap == mmap' = mmap
                           | c == 0        = mmap
-                          | otherwise     = bellmanFord' graph mmap' (c-1)
+                          | otherwise     = bellmanFord' (graph :: WeightedGraph) mmap' (c-1)
   where
     mmap' = foldl (bfNodeUpdate (edges graph)) mmap $ M.keys (nodes graph) -- 1 BellmanFord iteration
 
-bfNodeUpdate :: (WeightedEdges e, Ord a) => [e a] -> M.Map a Weight -> a -> M.Map a Weight
+bfNodeUpdate 
+  :: (Ord (e n), Ord n, WeightedEdges e) 
+  => [e n] 
+  -> M.Map n (Weight, [e n]) 
+  -> n 
+  -> M.Map n (Weight, [e n])
 bfNodeUpdate es mmap n
-  | w == Nothing = mmap
-  | otherwise    = foldl update mmap efn
+  | val == Nothing = mmap
+  | otherwise      = foldl update mmap efn
     where
-      w = M.lookup n mmap
+      val = M.lookup n mmap
       efn = edgesFromNode n es
-      update m e = M.insertWith min (target e) (fromJust w + weight e) m
+      Just (w,ptsn) = val -- (weight, path to source node)
+      update m e = M.insertWith min (target e) (w + weight e, ptsn ++ [e]) m
+
+
 
 
 edgesFromNode :: (Eq n, Edges e) => n -> [e n] -> [e n]
