@@ -135,8 +135,12 @@ instance (Show n) => Show (DFEdge n) where
 instance (Show n) => Show (Edge n) where
   --show e = (show $ source e) ++ "-->" ++ (show $ target e)
   show (Edge s d) = (show s) ++ "-->" ++ (show d)
-  show (WeightedEdge s d w) = (show s) ++ "--" ++ (show w) ++ "-->" ++ (show d)
-  show e@(WeightedMarkedEdge s d w m) = (show s) ++ "--" ++ (show (pdistance e)) ++ "-->" ++ (show d)
+  show (WeightedEdge s d w) = (show s) ++ "--(" ++ (show w) ++ ")-->" ++ (show d)
+  show e@(WeightedMarkedEdge s d w m) = (show s) ++ "--(" ++ sw ++ "-" ++ (show l) ++ "l)-->" ++ (show d) 
+    where
+      (l,w) = pdistance e
+      sw | denominator w == 1 = show (numerator w)
+         | otherwise          = show (w)
 
 instance Show Node where
   show (Node n) = [n]

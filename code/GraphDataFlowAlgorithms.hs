@@ -92,25 +92,26 @@ normalizationVector graph
 
 
 --eval :: (WeightedMarkedEdges a) => Ratio Integer -> a b -> WeightedEdge b
-eval :: (WeightedMarkedEdges e) => Weight -> e n -> Edge n
+eval :: (WeightedMarkedEdges e) 
+  => Weight 
+  -> e n
+  -> Edge n
 eval at edge
   = WeightedEdge (source edge) (target edge) (weight edge - m * at)
     where
       m = fromIntegral (mark edge)
 
 
-feasibleGraph
-  :: WeightedMarkedEdges e 
+feasibleGraph :: WeightedMarkedEdges e 
   => Graph (M.Map l n) [e l] 
-  -> Graph (M.Map l n) [Edge l] -- nodes do not have to be of the same type
+  -> Graph (M.Map l n) [Edge l] -- nodes do not have to be of the same type but is specified anyway
 feasibleGraph (Graph ns es)
   = Graph ns es'
     where
       m   = sum [weight edge | edge <- es] + 1 -- dit is gewoon "een groot getal" (HF)
       es' = map (eval m) es
 
-dfGraph2weightedMarkedGraph -- Note: this does not change the nodes (yet)
-  :: (Ord n, DFNodes a, DFEdges e)
+dfGraph2weightedMarkedGraph :: (Ord n, DFNodes a, DFEdges e) -- Note: this does not change the nodes (yet)
   => Graph (M.Map n a) [e n]
   -> Graph (M.Map n a) [Edge n]
 dfGraph2weightedMarkedGraph (Graph ns es)
