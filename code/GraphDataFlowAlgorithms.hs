@@ -91,6 +91,19 @@ normalizationVector graph
     MCR
 -}
 
+
+
+
+pivot (pmap, graphTree) edges = edgeKeys
+--  | null edgeKeys = Left []
+--  | otherwise     = (pmap', graphTree')
+    where
+      edgeKeys = filter isJust $ map (edgeKey pmap) edges
+      e = maximum  $ map fromJust edgeKeys  -- TODO: not the maximum, but below the "current lambda" (or just a random pick from the list)
+      
+  
+  
+  
 {-
     Computes for which value of lambda the distance from a to b via
     edge (a, b) becomes larger than the current distance to b.
@@ -107,7 +120,7 @@ edgeKey pmap edge
       Just (pdistTarget) = M.lookup (target edge) pmap
       (deltaTokens, w)   = pdistSource + pdistance edge - pdistTarget -- is the sign still working properly (mark is stored as postive number, ex (7-λ) = (1,7)
 
-
+{-
 eval :: (WeightedMarkedEdges e) 
   => Weight 
   -> e n
@@ -116,7 +129,11 @@ eval at edge
   = WeightedEdge (source edge) (target edge) (weight edge - m * at)
     where
       m = fromIntegral (mark edge)
+-}
 
+{-
+    evalGraph evaluates a parametric graph with some multiplier l
+-}
 
 evalGraph :: ParametricEdges e
   => Weight
@@ -134,21 +151,34 @@ evalGraph l (Graph ns es)
           w' = w - (fromIntegral m) * la
 
 
---feasibleGraph :: (DFNodes n, DFEdges e, Ord l)
---  => Graph (M.Map l n) [e l]
---  -> l
---  -> Graph (M.Map l n) [Edge l] -- nodes do not have to be of the same type but is specified anyway
+feasibleGraph :: (DFNodes n, DFEdges e, Ord l)
+  => Graph (M.Map l n) [e l]
+  -> l
+  -> (M.Map l ParametricDistance, Graph (M.Map l n) [Edge l]) -- nodes do not have to be of the same type but is specified anyway
 feasibleGraph g@(Graph ns es) root
---  = Graph ns es'
-  = nodeKeys 
+  = (pmap, Graph ns es')
     where
-      m   = sum [weight edge | edge <- (edges pGraph)] + 1 -- dit is gewoon "een groot getal" (HF)
-      pGraph = df2parametricGraph g
-      bfPaths = bellmanFord (evalGraph m pGraph) root -- all weights paths from root node with a large lambda
-      paths = map snd $ M.elems $ bfPaths 
-      es' = foldl union [] paths -- combine all paths to form a new graph
-      nodeKeys = M.map (\(_,ps) -> sum $ map pdistance ps) bfPaths
-      
+      m   = sum [weight edge | edge <- (edges pGraph)] + 1      -- dit is gewoon "een groot getal" (HF)
+      pGraph = df2parametricGraph g                             -- convert dataflow graph to parametric graph
+      bfPaths = bellmanFord (evalGraph m pGraph) root           -- all weights and paths from root node with a large lambda m
+      paths = map snd $ M.elems $ bfPaths                       -- all paths
+      es' = foldl union [] paths                                -- combine all paths to form a new graph
+      pmap = M.map (\(_,ps) -> sum $ map pdistance ps) bfPaths  -- M.Map containing all the nodes with their parametric distance
+
+
+
+pmapAndGraphTree :: (Ord l, ParametricEdges e)
+  => Graph (M.Map l n) [e l]
+  -> l
+  -> Weight
+  -> (M.Map l ParametricDistance, Graph (M.Map l n) [Edge l])
+pmapAndGraphTree pGraph root lambda
+  = (pmap, Graph (nodes pGraph) es')
+    where
+      bfPaths = bellmanFord (evalGraph lambda pGraph) root      -- all weights and paths from root node with a lambda
+      paths = map snd $ M.elems $ bfPaths                       -- all paths
+      es' = foldl union [] paths                                -- combine all paths to form a new graph
+      pmap = M.map (\(_,ps) -> sum $ map pdistance ps) bfPaths  -- M.Map containing all the nodes with their parametric distance
 
 {-
 dfGraph2weightedMarkedGraph :: (Ord n, DFNodes a, DFEdges e) -- Note: this does not change the nodes (yet)
@@ -165,6 +195,10 @@ dfGraph2weightedMarkedGraph (Graph ns es)
           m = tokens e
           Just n = M.lookup s ns
           w = maximum (wcet n) % 1
+-}
+
+{-
+    df2parametricGraph converts a dataflow graph to a graph with parametric edges
 -}
 
 df2parametricGraph :: (Ord l, DFNodes n, DFEdges e)
