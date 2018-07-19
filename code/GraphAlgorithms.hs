@@ -55,7 +55,8 @@ dfsGU (e:es)
 
 
 {-
-    Bellman -Ford shortest,  TODO: optimize and clean?
+    Bellman -Ford shortest or longest path (change max/min for longest/shortest in bfNodeUpdate
+    TODO: optimize and clean?
     The map provided by the BellmanFord function contains the distance (weight)
     to each node from the root, and the traveled path
 -}
@@ -93,7 +94,8 @@ bfNodeUpdate es mmap n
       val = M.lookup n mmap
       efn = edgesFromNode n es
       Just (w,ptsn) = val -- (weight, path to source node)
-      update m e = M.insertWith min (target e) (w + weight e, ptsn ++ [e]) m
+--      update m e = M.insertWith min (target e) (w + weight e, ptsn ++ [e]) m -- Shortest path
+      update m e = M.insertWith max (target e) (w + weight e, ptsn ++ [e]) m  -- Longest path
 
 
 

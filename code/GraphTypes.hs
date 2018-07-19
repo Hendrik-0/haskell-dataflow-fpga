@@ -12,6 +12,7 @@ data Node = Node Label
 data Edge n = Edge n n
             | WeightedEdge n n Weight
             | WeightedMarkedEdge n n Weight Mark
+            | ParametricEdge n n Weight ParametricDistance
               deriving Eq
 
 
@@ -30,6 +31,10 @@ type WeightedGraph = Graph (M.Map Label Node) ([Edge Label])
 
 data Graph n e = Graph n e
 
+
+
+
+
 class Graphs g where
   nodes :: g n e -> n
   edges :: g n e -> e
@@ -37,6 +42,9 @@ class Graphs g where
 instance Graphs Graph where
   nodes (Graph n _) = n
   edges (Graph _ e) = e
+
+
+
 
 
 
@@ -51,6 +59,10 @@ instance Nodes DFNode where
   label (CSDFNode l _) = l
 
 
+
+
+
+
 class (Nodes n) => DFNodes n where
   wcet :: n -> [Integer]
   period :: n -> Integer
@@ -61,6 +73,10 @@ instance DFNodes DFNode where
   period = fromIntegral . length . wcet
 
 
+
+
+
+
 class Edges e where
   source :: e n -> n
   target :: e n -> n
@@ -69,9 +85,12 @@ instance Edges Edge where
   source (Edge s _)                   = s 
   source (WeightedEdge s _ _)         = s
   source (WeightedMarkedEdge s _ _ _) = s
+  source (ParametricEdge s _ _ _)     = s
+  
   target (Edge _ t)                   = t
   target (WeightedEdge _ t _)         = t
   target (WeightedMarkedEdge _ t _ _) = t
+  target (ParametricEdge _ t _ _)     = t
 
 instance Edges DFEdge where
   source (HSDFEdge s _ _)     = s
@@ -83,24 +102,41 @@ instance Edges DFEdge where
 
 
 
+
+
 class (Edges e) => WeightedEdges e where
    weight :: e n -> Weight
 
 instance WeightedEdges Edge where
    weight (WeightedEdge _ _ w)         = w
    weight (WeightedMarkedEdge _ _ w _) = w
+   weight (ParametricEdge _ _ w _)     = w
    weight _                            = 1 -- TODO ? default edge has weight 1
+
+
+
 
 
 
 class (Edges e, WeightedEdges e) => WeightedMarkedEdges e where
   mark :: e n -> Mark
-  pdistance :: e n -> ParametricDistance
 
 instance WeightedMarkedEdges Edge where
   mark (WeightedMarkedEdge _ _ _ m) = m
+  mark (ParametricEdge _ _ _ (m,w)) = m
   mark _                            = 0 -- TODO? marking 0 for Edge and WeightedEdge => no lambdas)
+
+
+
+
+
+class (Edges e, WeightedEdges e, WeightedMarkedEdges e) => ParametricEdges e where
+  pdistance :: e n -> ParametricDistance
+  
+instance ParametricEdges Edge where
+  pdistance (ParametricEdge _ _ _ p) = p
   pdistance e = (mark e, weight e)
+  
 
 
 
@@ -127,6 +163,15 @@ instance DFEdges DFEdge where
   prate edge = sum p % (fromIntegral $ length p) where p = production edge
   crate edge = sum c % (fromIntegral $ length c) where c = consumption edge
 
+
+
+
+
+
+
+
+
+
 instance (Show n) => Show (DFEdge n) where
   show (HSDFEdge s d t) = (show s) ++ "--" ++ (show t) ++ "-->" ++ (show d)
   show (SDFEdge s d t pr cr) = (show s) ++ (show pr)  ++ "--" ++ (show t) ++ "-->" ++ (show cr) ++ (show d)
@@ -136,14 +181,29 @@ instance (Show n) => Show (Edge n) where
   --show e = (show $ source e) ++ "-->" ++ (show $ target e)
   show (Edge s d) = (show s) ++ "-->" ++ (show d)
   show (WeightedEdge s d w) = (show s) ++ "--(" ++ (show w) ++ ")-->" ++ (show d)
-  show e@(WeightedMarkedEdge s d w m) = (show s) ++ "--(" ++ sw ++ "-" ++ (show l) ++ "l)-->" ++ (show d) 
-    where
-      (l,w) = pdistance e
-      sw | denominator w == 1 = show (numerator w)
-         | otherwise          = show (w)
+  show (WeightedMarkedEdge s d w m)  = (show s) ++ "--" ++ (show (m,w)) ++ "-->" ++ (show d) 
+  show (ParametricEdge s d w' (m,w)) 
+    = (show s) ++ "--(" ++ sw' ++ ")(" ++ sw ++ ")-->" ++ (show d)
+      where
+        sw  | denominator w  == 1 = show (numerator w ) ++ "-" ++ (show m) ++ "λ"
+            | otherwise           = show (          w ) ++ "-" ++ (show m) ++ "λ"
+        sw' | denominator w' == 1 = show (numerator w')
+            | otherwise           = show (          w')
 
 instance Show Node where
   show (Node n) = [n]
+
+
+instance Show DFNode where
+  show e = show (label e)
+
+
+instance (Show n, Show e) => Show (Graph n e) where
+  show (Graph ns es) = "Nodes: " ++ (show ns) ++ "| Edges: " ++ show es
+
+
+
+
 
 
 

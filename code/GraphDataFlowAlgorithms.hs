@@ -5,6 +5,7 @@ import GraphTypes
 import qualified Data.Map as M
 import Data.Ratio
 import Data.Maybe
+import Data.List
 
 {-
     Computes the 'modulus' of the graph, which is the weighted number of tokens produced / consumed
@@ -90,8 +91,23 @@ normalizationVector graph
     MCR
 -}
 
+{-
+    Computes for which value of lambda the distance from a to b via
+    edge (a, b) becomes larger than the current distance to b.
+-}
+edgeKey :: (ParametricEdges e, Ord l)
+  => (M.Map l ParametricDistance)
+  -> e l
+  -> Maybe Weight
+edgeKey pmap edge
+    | deltaTokens > 0 = Just (w / (deltaTokens % 1)) -- w = Ratio, so division is fine
+    | otherwise       = Nothing
+    where
+      Just (pdistSource) = M.lookup (source edge) pmap
+      Just (pdistTarget) = M.lookup (target edge) pmap
+      (deltaTokens, w)   = pdistSource + pdistance edge - pdistTarget -- is the sign still working properly (mark is stored as postive number, ex (7-λ) = (1,7)
 
---eval :: (WeightedMarkedEdges a) => Ratio Integer -> a b -> WeightedEdge b
+
 eval :: (WeightedMarkedEdges e) 
   => Weight 
   -> e n
@@ -102,15 +118,39 @@ eval at edge
       m = fromIntegral (mark edge)
 
 
-feasibleGraph :: WeightedMarkedEdges e 
-  => Graph (M.Map l n) [e l] 
-  -> Graph (M.Map l n) [Edge l] -- nodes do not have to be of the same type but is specified anyway
-feasibleGraph (Graph ns es)
+evalGraph :: ParametricEdges e
+  => Weight
+  -> Graph (M.Map l n) [e l]
+  -> Graph (M.Map l n) [Edge l]
+evalGraph l (Graph ns es)
   = Graph ns es'
     where
-      m   = sum [weight edge | edge <- es] + 1 -- dit is gewoon "een groot getal" (HF)
-      es' = map (eval m) es
+      es' = map (evalEdge l) es
+      evalEdge la e = ParametricEdge s t w' (m,w)
+        where
+          s = source e
+          t = target e
+          (m,w) = pdistance e
+          w' = w - (fromIntegral m) * la
 
+
+--feasibleGraph :: (DFNodes n, DFEdges e, Ord l)
+--  => Graph (M.Map l n) [e l]
+--  -> l
+--  -> Graph (M.Map l n) [Edge l] -- nodes do not have to be of the same type but is specified anyway
+feasibleGraph g@(Graph ns es) root
+--  = Graph ns es'
+  = nodeKeys 
+    where
+      m   = sum [weight edge | edge <- (edges pGraph)] + 1 -- dit is gewoon "een groot getal" (HF)
+      pGraph = df2parametricGraph g
+      bfPaths = bellmanFord (evalGraph m pGraph) root -- all weights paths from root node with a large lambda
+      paths = map snd $ M.elems $ bfPaths 
+      es' = foldl union [] paths -- combine all paths to form a new graph
+      nodeKeys = M.map (\(_,ps) -> sum $ map pdistance ps) bfPaths
+      
+
+{-
 dfGraph2weightedMarkedGraph :: (Ord n, DFNodes a, DFEdges e) -- Note: this does not change the nodes (yet)
   => Graph (M.Map n a) [e n]
   -> Graph (M.Map n a) [Edge n]
@@ -125,3 +165,19 @@ dfGraph2weightedMarkedGraph (Graph ns es)
           m = tokens e
           Just n = M.lookup s ns
           w = maximum (wcet n) % 1
+-}
+
+df2parametricGraph :: (Ord l, DFNodes n, DFEdges e)
+  => Graph (M.Map l n) [e l]
+  -> Graph (M.Map l n) [Edge l]
+df2parametricGraph (Graph ns es)
+  = Graph ns es'
+    where
+      es' = map edge2edge es
+      edge2edge e = (ParametricEdge s t w (m,w))
+        where
+          s = source e
+          t = target e
+          m = tokens e
+          Just n = M.lookup s ns
+          w = maximum (wcet n) %1
