@@ -3,6 +3,7 @@ module GraphAlgorithms where
 import GraphTypes
 import Data.List
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Data.Maybe
 import Data.Ratio
 
@@ -60,32 +61,32 @@ dfsGU (e:es)
     The map provided by the BellmanFord function contains the distance (weight)
     to each node from the root, and the traveled path
 -}
-bellmanFord :: (Ord (e n), Ord n, WeightedEdges e, Graphs g) 
-  => g (M.Map n a) [e n] 
+bellmanFord :: (Ord (e n), Ord n, WeightedEdges e) 
+  => [e n] 
   -> n
   -> M.Map n (Weight, [e n])
-bellmanFord graph root
---  = (iterate (bfIteration graph) minit)!!l
-  = bellmanFord' graph minit l
+bellmanFord es root
+  = bellmanFord' es minit ns (S.size ns)
     where
+      ns    = S.fromList (map source es ++ map target es)
       minit = M.insert root (0,[]) M.empty
-      l = length (nodes graph)
 
-bellmanFord' :: (Ord (e n), Ord n, WeightedEdges e, Graphs g) 
-  => g (M.Map n a) [e n]
+bellmanFord' :: (Ord (e n), Ord n, WeightedEdges e) 
+  => [e n]
   -> M.Map n (Weight, [e n]) 
-  -> Int 
+  -> S.Set n
+  -> Int
   -> M.Map n (Weight, [e n])
-bellmanFord' graph mmap c | mmap == mmap' = mmap
+bellmanFord' es mmap ns c | mmap == mmap' = mmap
                           | c == 0        = mmap
-                          | otherwise     = bellmanFord' graph mmap' (c-1)
+                          | otherwise     = bellmanFord' es mmap' ns (c-1)
   where
-    mmap' = foldl (bfNodeUpdate (edges graph)) mmap $ M.keys (nodes graph) -- 1 BellmanFord iteration
+    mmap' = foldl (bfNodeUpdate es) mmap $ ns -- 1 BellmanFord iteration
 
 bfNodeUpdate :: (Ord (e n), Ord n, WeightedEdges e) 
   => [e n] 
   -> M.Map n (Weight, [e n]) 
-  -> n 
+  -> n
   -> M.Map n (Weight, [e n])
 bfNodeUpdate es mmap n
   | val == Nothing = mmap

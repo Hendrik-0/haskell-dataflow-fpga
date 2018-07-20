@@ -80,7 +80,7 @@ instance DFNodes DFNode where
 class Edges e where
   source :: e n -> n
   target :: e n -> n
-
+  
 instance Edges Edge where
   source (Edge s _)                   = s 
   source (WeightedEdge s _ _)         = s

@@ -9,6 +9,7 @@ import Data.Tuple
 import GraphTypes
 import GraphAlgorithms
 import GraphDataFlowAlgorithms
+import MaxCycleRatio
 
 -- example graphs:
 sdf :: Graph (M.Map Char DFNode) [DFEdge Label]
