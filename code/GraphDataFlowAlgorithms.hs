@@ -6,6 +6,7 @@ import qualified Data.Map as M
 import Data.Ratio
 import Data.Maybe
 import Data.List
+import Data.Tuple
 
 {-
     Computes the 'modulus' of the graph, which is the weighted number of tokens produced / consumed
@@ -94,16 +95,32 @@ normalizationVector graph
 
 
 
-pivot (pmap, graphTree) edges = edgeKeys
+pivot (pmap, gTree) es = edgeKeys
 --  | null edgeKeys = Left []
 --  | otherwise     = (pmap', graphTree')
     where
-      edgeKeys = filter isJust $ map (edgeKey pmap) edges
-      e = maximum  $ map fromJust edgeKeys  -- TODO: not the maximum, but below the "current lambda" (or just a random pick from the list)
+      edgeKeys = filter (\(_,w) -> isJust w) $ zip es $ map (edgeKey pmap) es
+      (w',e) = maximum $ map swap $ map (fmap fromJust) edgeKeys -- Take maximum of lambda, TODO: check below the "current" lambda (or pick one?)
+      isAn = isAnchestor (edges gTree) (target e) (source e) -- check if, in the current graphTree, the destination node is an anchestor of the source node
       
-  
-  
-  
+
+
+{- 
+    isAnchestor uses dfs to determine if the source node is an anchestor of the destination node
+    TODO: optimize, because dfs is a bit overkill....
+-}
+
+isAnchestor :: (Eq n, Edges e)
+  => [e n]
+  -> n
+  -> n
+  -> Bool
+isAnchestor es s d = length l > 0
+  where
+    l = filter (\e -> target e == s) (snd $ dfsHO es d)
+    
+
+
 {-
     Computes for which value of lambda the distance from a to b via
     edge (a, b) becomes larger than the current distance to b.

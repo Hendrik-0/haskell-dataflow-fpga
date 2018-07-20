@@ -4,6 +4,7 @@ import qualified Data.Map as M
 import Data.List
 import Data.Maybe
 import Data.Ratio
+import Data.Tuple
 
 import GraphTypes
 import GraphAlgorithms
