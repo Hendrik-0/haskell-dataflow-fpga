@@ -1,27 +1,30 @@
-module MaxCycleRatio where
+module DataFlow.MaxCycleRatio where
 
-import GraphAlgorithms
-import GraphTypes
+import Graph
+
+import DataFlow.Types
+
 import qualified Data.Map as M
-import Data.Ratio
 import Data.Maybe
 import Data.List
 import Data.Tuple
 
+import Debug.Trace
+
 {-
-    MCR
+    MaxCycleRatio
 -}
-mcr ::
-     DFGraph
-  -> (Maybe Weight, Maybe [Edge Label])
+mcr :: (Ord l, DFNodes n, DFEdges e)
+  => Graph (M.Map l (n l)) [e l]
+  -> (Maybe Weight, Maybe [Edge l])
 mcr g
   = mcrR root candidates spanningTree
   where
-    pgraph             = df2parametricGraph g
-    (root:_)           = M.keys $ nodes g
-    largeWeight        = sum [max (weight edge) 0 | edge <- (edges pgraph)] + 1      -- dit is gewoon "een groot getal" (HF)
-    (_, spanningTree)  = pmapAndGraphTree (edges pgraph) root largeWeight
-    candidates         = edges pgraph \\ spanningTree
+    pgraph             = df2parametricGraph g                                    -- convert dataflow graph to a graph conting parametric distances
+    (root:_)           = M.keys $ nodes g                                        -- pick a "random" node as root
+    largeWeight        = sum [max (weight edge) 0 | edge <- (edges pgraph)] + 1  -- dit is gewoon "een groot getal" (HF)
+    (_, spanningTree)  = pmapAndGraphTree (edges pgraph) root largeWeight        -- create spanningTree of the parametric graph with a largeWeigth
+    candidates         = edges pgraph \\ spanningTree                            -- remove all the spanningTree edges from the candidate edges, so that they dont apear again the in spanningTree if they disapear.
 
 mcrR :: (Ord a, Eq (e a), ParametricEdges e)
   => a
@@ -29,18 +32,19 @@ mcrR :: (Ord a, Eq (e a), ParametricEdges e)
   -> [e a]
   -> (Maybe Weight, Maybe [e a])
 mcrR root candidates spanningTree
-  | null es                     = (Nothing, Nothing)
-  | isAncestor spanningTree v w = (Just lambda, Just bottleneck)
+  | null es                     = (Nothing, Nothing)                    -- no now edges found to add
+  | isAncestor spanningTree v w = (Just lambda, Just bottleneck)        -- Does the newly found edge form a cycle?
   | otherwise                   = mcrR root candidates' spanningTree'
   where
-    (dists, _)      = pmapAndGraphTree spanningTree root 1
-    (es, _)         = partition (\(a, b) -> isJust a) $ zip (map (edgeKey dists) candidates) candidates
-    (Just lambda, pivot) = maximumBy orderTuples es
-    (v, w)               = (source pivot, target pivot)
-    candidates'     = (map snd es) \\ [pivot]
-    spanningTree'   = pivot : filter (\e -> target e /= w) spanningTree
-    bottleneck      = []
-    orderTuples x y = compare (fst x) (fst y)
+    (pmap, _)            = pmapAndGraphTree spanningTree root 1               -- pmap contains all the start keys of all the nodes
+    edgeKeys             = zip (map (edgeKey pmap) candidates) candidates     -- edgeKeys is a list with all the calculated lambda's zipped with their corresponding edge.
+    (es, _)              = partition (\(a, b) -> isJust a) edgeKeys           -- remove the Nothings from the list. so es contains the list of tuples with lambda
+    (Just lambda, pivot) = maximumBy orderTuples es                           -- take the max of the tuplelist, so take the largest lambda and the corresponding edge (pivot)
+    (v, w)               = (source pivot, target pivot)                       -- source and destination of the pivot edge
+    candidates'          = (map snd es) \\ [pivot]                            -- the edge candidates for the next iteration are the ones that have a lambda which is smaller or equal than the pivot lambda
+    spanningTree'        = pivot : filter (\e -> target e /= w) spanningTree  -- the new spanningTree is the old one, with the one edge replaced by the pivot edge
+    bottleneck           = [] -- TODO:cycle
+    orderTuples x y      = compare (fst x) (fst y)
     
 
 {-
@@ -67,7 +71,9 @@ isAncestor :: (Eq n, Edges e)
   -> Bool
 isAncestor es s d = length l > 0
   where
-    l = filter (\e -> target e == s) (snd $ dfsHO es d)
+    dfs = snd $ dfsHO es d -- all paths from destination
+    l = filter (\e -> target e == s) dfs -- filter path to source
+--    pathFromDfs (p:ps) =
     
 
 
@@ -179,8 +185,8 @@ dfGraph2weightedMarkedGraph (Graph ns es)
 -}
 
 df2parametricGraph :: (Ord l, DFNodes n, DFEdges e)
-  => Graph (M.Map l n) [e l]
-  -> Graph (M.Map l n) [Edge l]
+  => Graph (M.Map l (n l)) [e l]
+  -> Graph (M.Map l (n l)) [Edge l]
 df2parametricGraph (Graph ns es)
   = Graph ns es'
     where

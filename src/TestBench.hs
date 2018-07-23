@@ -3,16 +3,30 @@ module TestBench where
 import qualified Data.Map as M
 import Data.List
 import Data.Maybe
-import Data.Ratio
 import Data.Tuple
 
-import GraphTypes
-import GraphAlgorithms
-import GraphDataFlowAlgorithms
-import MaxCycleRatio
+import DataFlow
+import Graph
+
+wgraph = Graph (M.fromList
+              [('S', Node 'S')
+              ,('A', Node 'A')
+              ,('B', Node 'B')
+              ,('C', Node 'C')
+              ,('D', Node 'D')
+              ,('E', Node 'E')
+              ])
+              ([WeightedEdge 'S' 'A' 10
+              , WeightedEdge 'S' 'E' 8
+              , WeightedEdge 'E' 'D' 1
+              , WeightedEdge 'D' 'A' (-4)
+              , WeightedEdge 'D' 'C' (-1)
+              , WeightedEdge 'A' 'C' 2
+              , WeightedEdge 'C' 'B' (-2)
+              , WeightedEdge 'B' 'A' 1
+              ])
 
 -- example graphs:
-sdf :: Graph (M.Map Char DFNode) [DFEdge Label]
 sdf  = Graph (M.fromList 
               [ ('I', HSDFNode 'I' 0)
               , ('*', HSDFNode '*' 1)
@@ -58,23 +72,7 @@ hsdf = Graph (M.fromList
               , HSDFEdge 'b' 'a' 0
               ])
 
-wgraph = Graph (M.fromList
-              [('S', Node 'S')
-              ,('A', Node 'A')
-              ,('B', Node 'B')
-              ,('C', Node 'C')
-              ,('D', Node 'D')
-              ,('E', Node 'E')
-              ])
-              ([WeightedEdge 'S' 'A' 10
-              , WeightedEdge 'S' 'E' 8
-              , WeightedEdge 'E' 'D' 1
-              , WeightedEdge 'D' 'A' (-4)
-              , WeightedEdge 'D' 'C' (-1)
-              , WeightedEdge 'A' 'C' 2
-              , WeightedEdge 'C' 'B' (-2)
-              , WeightedEdge 'B' 'A' 1
-              ])
+
 
 
 hsdf2 = Graph (M.fromList
@@ -93,6 +91,24 @@ hsdf2 = Graph (M.fromList
               , HSDFEdge 'c' 'a' 1
               ])
 
-
-
+hsdf3 = Graph (M.fromList
+              [('a', HSDFNode 'a' 15)
+              ,('b', HSDFNode 'b' 2)
+              ,('c', HSDFNode 'c' 1)
+              ,('d', HSDFNode 'd' 1)
+              ,('e', HSDFNode 'e' 1)
+              ,('f', HSDFNode 'f' 1)
+              ])
+              ([HSDFEdge 'a' 'b' 0
+              , HSDFEdge 'a' 'c' 0
+              , HSDFEdge 'a' 'd' 0
+              , HSDFEdge 'a' 'a' 0
+              , HSDFEdge 'b' 'e' 0
+              , HSDFEdge 'd' 'e' 0
+              , HSDFEdge 'd' 'f' 0
+              , HSDFEdge 'e' 'f' 0
+              , HSDFEdge 'f' 'b' 1
+              , HSDFEdge 'e' 'c' 0
+              --, HSDFEdge 'b' 'a' 0
+              ])
 
