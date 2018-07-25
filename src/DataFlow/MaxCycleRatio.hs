@@ -158,7 +158,8 @@ pmapAndGraphTree :: (Ord l, ParametricEdges e)
 pmapAndGraphTree es root lambda
   = (pmap, es')
     where
-      bfPaths = bellmanFord (evalEdges lambda es) root              -- all weights and paths from root node with a lambda
+      bfPaths'= bellmanFord (evalEdges lambda es) root              -- all weights and paths from root node with a lambda
+      Right bfPaths = bfPaths'
       paths   = map snd $ M.elems $ bfPaths                         -- all paths
       es'     = foldl union [] paths                                -- combine all paths to form a new graph
       pmap    = M.map (\(_,ps) -> sum $ map pdistance ps) bfPaths   -- M.Map containing all the nodes with their parametric distance

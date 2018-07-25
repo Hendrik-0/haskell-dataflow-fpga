@@ -8,6 +8,15 @@ import Data.Tuple
 import DataFlow
 import Graph
 
+cwgraph = Graph (M.fromList
+              [('a', Node 'a')
+              ,('b', Node 'b')
+              ])
+              ([WeightedEdge 'a' 'b' (-1)
+              , WeightedEdge 'b' 'a' (-1)
+              , WeightedEdge 'a' 'a' (-1)
+              ])
+               
 wgraph = Graph (M.fromList
               [('S', Node 'S')
               ,('A', Node 'A')
@@ -102,7 +111,7 @@ hsdf3 = Graph (M.fromList
               ([HSDFEdge 'a' 'b' 0
               , HSDFEdge 'a' 'c' 0
               , HSDFEdge 'a' 'd' 0
-              , HSDFEdge 'a' 'a' 0
+              , HSDFEdge 'a' 'a' 1
               , HSDFEdge 'b' 'e' 0
               , HSDFEdge 'd' 'e' 0
               , HSDFEdge 'd' 'f' 0
