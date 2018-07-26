@@ -8,6 +8,7 @@ import qualified Data.Map as M
 import Data.Maybe
 import Data.List
 import Data.Tuple
+import Data.Either
 
 import Debug.Trace
 
@@ -16,36 +17,52 @@ import Debug.Trace
 -}
 mcr :: (Ord l, DFNodes n, DFEdges e)
   => Graph (M.Map l (n l)) [e l]
-  -> (Maybe Weight, Maybe [Edge l])
+  -> (Maybe Weight, Maybe [[Edge l]])
 mcr g
-  = mcrR root candidates spanningTree
-  where
-    pgraph             = df2parametricGraph g                                    -- convert dataflow graph to a graph conting parametric distances
-    (root:_)           = M.keys $ nodes g                                        -- pick a "random" node as root
-    largeWeight        = sum [max (weight edge) 0 | edge <- (edges pgraph)] + 1  -- dit is gewoon "een groot getal" (HF)
-    (_, spanningTree)  = pmapAndGraphTree (edges pgraph) root largeWeight        -- create spanningTree of the parametric graph with a largeWeigth
-    candidates         = edges pgraph \\ spanningTree                            -- remove all the spanningTree edges from the candidate edges, so that they dont apear again the in spanningTree if they disapear.
+  | isLeft pmapSpTree = (Just ratio, Just cycles)                               -- initial spanningTree already contains a cycle
+  | otherwise         = mcrR root candidates spTree
+    where
+      pgraph              = df2parametricGraph g                                    -- convert dataflow graph to a graph conting parametric distances
+      (root:_)            = M.keys $ nodes g                                        -- pick a "random" node as root
+      largeWeight         = sum [max (weight edge) 0 | edge <- (edges pgraph)] + 1  -- dit is gewoon "een groot getal" (HF)
+      pmapSpTree          = pmapAndSpanningTree (edges pgraph) root largeWeight     -- create spanningTree of the parametric graph with a largeWeigth
+      Left cycles         = pmapSpTree
+      Right (pmap,spTree) = pmapSpTree
+      candidates          = edges pgraph \\ spTree                              -- remove all the spanningTree edges from the candidate edges, so that they dont apear again the in spanningTree if they disapear.
+      ratio               = maximum $ map mcrFromParametricCycle cycles         -- if initial tree already contains a cycle, this is the MCR
 
-mcrR :: (Ord a, Eq (e a), ParametricEdges e)
-  => a
-  -> [e a]
-  -> [e a]
-  -> (Maybe Weight, Maybe [e a])
-mcrR root candidates spanningTree
-  | null es                     = (Nothing, Nothing)                    -- no now edges found to add
-  | isAncestor spanningTree v w = (Just lambda, Just bottleneck)        -- Does the newly found edge form a cycle?
-  | otherwise                   = mcrR root candidates' spanningTree'
+mcrFromParametricCycle :: ParametricEdges e
+  => [e l]
+  -> Weight
+mcrFromParametricCycle c
+  | tokens >0 = w/ (tokens  % 1)
+  | otherwise = error "deadlock"
+    where 
+      (tokens, w) = sum $ map pdistance c
+  
+  
+mcrR :: (Ord l, Eq (e l), ParametricEdges e)
+  => l
+  -> [e l]
+  -> [e l]
+  -> (Maybe Weight, Maybe [[Edge l]])
+mcrR root candidates spTree
+  | null es               = (Nothing, Nothing )                    -- no now edges found to add
+  | isAncestor spTree v w = (Just lambda, Just bottleneck)               -- Does the newly found edge form a cycle?
+  | otherwise             = mcrR root candidates' spTree'
   where
-    (pmap, _)            = pmapAndGraphTree spanningTree root 1               -- pmap contains all the start keys of all the nodes
+    pmapSpTree           = pmapAndSpanningTree spTree root 1                  -- Either returns a spanningTree (Right) or a list of cycles (Left)
+    Left cycles          = pmapSpTree                                         -- This should never occur, since the incomming tree never has a cycle
+    Right (pmap,_)       = pmapSpTree                                         -- pmap contains all the start keys of all the nodes
     edgeKeys             = zip (map (edgeKey pmap) candidates) candidates     -- edgeKeys is a list with all the calculated lambda's zipped with their corresponding edge.
     (es, _)              = partition (\(a, b) -> isJust a) edgeKeys           -- remove the Nothings from the list. so es contains the list of tuples with lambda
     (Just lambda, pivot) = maximumBy orderTuples es                           -- take the max of the tuplelist, so take the largest lambda and the corresponding edge (pivot)
     (v, w)               = (source pivot, target pivot)                       -- source and destination of the pivot edge
     candidates'          = (map snd es) \\ [pivot]                            -- the edge candidates for the next iteration are the ones that have a lambda which is smaller or equal than the pivot lambda
-    spanningTree'        = pivot : filter (\e -> target e /= w) spanningTree  -- the new spanningTree is the old one, with the one edge replaced by the pivot edge
-    bottleneck           = [] -- TODO:cycle
+    spTree'              = pivot : filter (\e -> target e /= w) spTree        -- the new spanningTree is the old one, with the one edge replaced by the pivot edge
     orderTuples x y      = compare (fst x) (fst y)
-    
+    Left bottleneck      = pmapAndSpanningTree spTree' root 1                 -- if there is a cycle, the pmapAndSpanningTree (which uses bf) will find it
+   
 
 {-
 pivot (pmap, gTree) es = edgeKeys
@@ -69,7 +86,7 @@ isAncestor :: (Eq n, Edges e)
   -> n
   -> n
   -> Bool
-isAncestor es s d = length l > 0
+isAncestor es s d = length l > 0 || s == d -- path to source, or selfedge
   where
     dfs = snd $ dfsHO es d -- all paths from destination
     l = filter (\e -> target e == s) dfs -- filter path to source
@@ -92,17 +109,6 @@ edgeKey pmap edge
       Just (pdistSource) = M.lookup (source edge) pmap
       Just (pdistTarget) = M.lookup (target edge) pmap
       (deltaTokens, w)   = pdistSource + pdistance edge - pdistTarget -- is the sign still working properly (mark is stored as postive number, ex (7-λ) = (1,7)
-
-{-
-eval :: (WeightedMarkedEdges e) 
-  => Weight 
-  -> e n
-  -> Edge n
-eval at edge
-  = WeightedEdge (source edge) (target edge) (weight edge - m * at)
-    where
-      m = fromIntegral (mark edge)
--}
 
 {-
     evalEdges evaluates a list of parametric edges with some multiplier l
@@ -132,54 +138,27 @@ evalGraph :: ParametricEdges e
 evalGraph l (Graph ns es)
   = Graph ns (evalEdges l es)
 
-
 {-
-feasibleGraph :: (DFNodes n, DFEdges e, Ord l)
-  => Graph (M.Map l n) [e l]
-  -> l
-  -> (M.Map l ParametricDistance, Graph (M.Map l n) [Edge l]) -- nodes do not have to be of the same type but is specified anyway
-feasibleGraph g@(Graph ns es) root
-  = (pmap, Graph ns es')
-    where
-      m   = sum [weight edge | edge <- (edges pGraph)] + 1      -- dit is gewoon "een groot getal" (HF)
-      pGraph = df2parametricGraph g                             -- convert dataflow graph to parametric graph
-      bfPaths = bellmanFord (evalEdges m pGraph) root           -- all weights and paths from root node with a large lambda m
-      paths = map snd $ M.elems $ bfPaths                       -- all paths
-      es' = foldl union [] paths                                -- combine all paths to form a new graph
-      pmap = M.map (\(_,ps) -> sum $ map pdistance ps) bfPaths  -- M.Map containing all the nodes with their parametric distance
+    pmapAndSpanningTree provides Either 
+    a list of cycles 
+    or a M.Map containing the parametric distance and the path, to/for each node
 -}
 
-
-pmapAndGraphTree :: (Ord l, ParametricEdges e)
+pmapAndSpanningTree :: (Ord l, ParametricEdges e)
   => [e l]
   -> l
   -> Weight
-  -> (M.Map l ParametricDistance, [Edge l])
-pmapAndGraphTree es root lambda
-  = (pmap, es')
+  -> Either [[Edge l]] (M.Map l ParametricDistance, [Edge l])
+pmapAndSpanningTree es root lambda
+  | isLeft bf = Left cycles
+  | otherwise = Right (pmap, es')
     where
-      bfPaths'= bellmanFord (evalEdges lambda es) root              -- all weights and paths from root node with a lambda
-      Right bfPaths = bfPaths'
-      paths   = map snd $ M.elems $ bfPaths                         -- all paths
-      es'     = foldl union [] paths                                -- combine all paths to form a new graph
-      pmap    = M.map (\(_,ps) -> sum $ map pdistance ps) bfPaths   -- M.Map containing all the nodes with their parametric distance
-
-{-
-dfGraph2weightedMarkedGraph :: (Ord n, DFNodes a, DFEdges e) -- Note: this does not change the nodes (yet)
-  => Graph (M.Map n a) [e n]
-  -> Graph (M.Map n a) [Edge n]
-dfGraph2weightedMarkedGraph (Graph ns es)
-  = Graph ns es'
-    where
-      es' = map edge2edge es
-      edge2edge e = (WeightedMarkedEdge s t w m)
-        where
-          s = source e
-          t = target e
-          m = tokens e
-          Just n = M.lookup s ns
-          w = maximum (wcet n) % 1
--}
+      bf          = bellmanFord (evalEdges lambda es) root            -- all weights and paths from root node with a lambda
+      Left cycles = bf                                                -- Left means a list of cycles
+      Right bfMap = bf                                                -- Right means a M.Map containing weights and paths from root node to all other nodes
+      paths       = map snd $ M.elems $ bfMap                         -- all paths from M.Map
+      es'         = foldl union [] paths                              -- combine all paths to form a new graph
+      pmap        = M.map (\(_,ps) -> sum $ map pdistance ps) bfMap   -- M.Map containing all the nodes with their parametric distance
 
 {-
     df2parametricGraph converts a dataflow graph to a graph with parametric edges

@@ -107,8 +107,8 @@ instance (Show n) => Show (Edge n) where
   show (ParametricEdge s d w' (m,w)) 
     = (show s) ++ "--(" ++ sw' ++ ")(" ++ sw ++ ")-->" ++ (show d)
       where
-        sw  | denominator w  == 1 = show (numerator w ) ++ "-" ++ (show m) ++ "λ"
-            | otherwise           = show (          w ) ++ "-" ++ (show m) ++ "λ"
+        sw  | denominator w  == 1 = show (numerator w ) ++ "-" ++ (show m) ++ "l" --"λ"
+            | otherwise           = show (          w ) ++ "-" ++ (show m) ++ "l" --"λ"
         sw' | denominator w' == 1 = show (numerator w')
             | otherwise           = show (          w')
 

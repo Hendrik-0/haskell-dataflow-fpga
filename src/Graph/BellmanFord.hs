@@ -12,10 +12,10 @@ import qualified Data.Set as S
     a M.Map containing (weight, path to node, is a cycle) for each node,
     or a list of cycles, which is a list of paths in which each paths forms a cycle.
 -}
-bellmanFord :: (Ord (e n), Ord n, WeightedEdges e) 
-  => [e n] 
-  -> n
-  -> Either ([[e n]]) (M.Map n (Weight, [e n]))
+bellmanFord :: (Ord (e l), Ord l, WeightedEdges e) 
+  => [e l]
+  -> l
+  -> Either [[e l]] (M.Map l (Weight, [e l]))
 bellmanFord es root
   = bellmanFord' es minit ns (S.size ns)
     where
@@ -27,12 +27,12 @@ bellmanFord es root
     a M.Map containing (weight, path to node, is a cycle) for each node,
     or a list cycles, which is a list paths.
 -}
-bellmanFord' :: (Ord (e n), Ord n, WeightedEdges e) 
-  => [e n]
-  -> M.Map n (Weight, [e n], Bool) 
-  -> S.Set n
+bellmanFord' :: (Ord (e l), Ord l, WeightedEdges e) 
+  => [e l]
+  -> M.Map l (Weight, [e l], Bool) 
+  -> S.Set l
   -> Int
-  -> Either ([[e n]]) (M.Map n (Weight, [e n])) 
+  -> Either [[e l]] (M.Map l (Weight, [e l])) 
 bellmanFord' es mmap ns c | mmap == mmap' = Right $ M.map (\(a,b,_) -> (a,b)) mmap -- remove the boolean from the M.Map, so only provide the weight and path
                           | hasCycles     = Left $ map (\(_,p,_) -> p) $ M.elems cycles
 --                          | c == 0 && mmap' /= mmap = Nothing
@@ -48,11 +48,11 @@ bellmanFord' es mmap ns c | mmap == mmap' = Right $ M.map (\(a,b,_) -> (a,b)) mm
     if the outgoing edges reach nodes with a shorter/longer path.
     the node, paths, and ifCycle is stored in the M.Map
 -}
-bfNodeUpdate :: (Ord (e n), Ord n, WeightedEdges e) 
-  => [e n] 
-  -> M.Map n (Weight, [e n], Bool) 
-  -> n
-  -> M.Map n (Weight, [e n], Bool)
+bfNodeUpdate :: (Ord (e l), Ord l, WeightedEdges e) 
+  => [e l] 
+  -> M.Map l (Weight, [e l], Bool) 
+  -> l
+  -> M.Map l (Weight, [e l], Bool)
 bfNodeUpdate es mmap n
   | val == Nothing = mmap
   | otherwise      = foldl update mmap efn
@@ -71,5 +71,5 @@ bfNodeUpdate es mmap n
 
 
 
-edgesFromNode :: (Eq n, Edges e) => n -> [e n] -> [e n]
+edgesFromNode :: (Eq l, Edges e) => l -> [e l] -> [e l]
 edgesFromNode n es = filter (\e -> (source e) == n) es

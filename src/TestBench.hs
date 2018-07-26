@@ -16,7 +16,7 @@ cwgraph = Graph (M.fromList
               , WeightedEdge 'b' 'a' (-1)
               , WeightedEdge 'a' 'a' (-1)
               ])
-               
+
 wgraph = Graph (M.fromList
               [('S', Node 'S')
               ,('A', Node 'A')
@@ -121,3 +121,8 @@ hsdf3 = Graph (M.fromList
               --, HSDFEdge 'b' 'a' 0
               ])
 
+csdf2 = Graph (M.fromList
+              [ ('a', CSDFNode 'a' [2,2])
+              ])
+              ([CSDFEdge 'a' 'a' 1 [1,2] [1,2]
+              ])
