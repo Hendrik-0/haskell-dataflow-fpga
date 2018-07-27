@@ -40,15 +40,14 @@ mcrFromParametricCycle c
     where 
       (tokens, w) = sum $ map pdistance c
   
-  
 mcrR :: (Ord l, Eq (e l), ParametricEdges e)
   => l
   -> [e l]
   -> [e l]
-  -> (Maybe Weight, Maybe [Edge l])
+  -> (Maybe Weight, Maybe [e l])
 mcrR root candidates spTree
   | null es               = (Nothing, Nothing)                    -- no now edges found to add, graph is not cyclic?
-  | isAncestor spTree v w = (Just lambda, Just bottleneck)               -- Does the newly found edge form a cycle?
+  | isJust ancestorPath   = (Just lambda, fmap (pivot:) ancestorPath)
   | otherwise             = mcrR root candidates' spTree'
   where
     pmapSpTree           = pmapAndSpanningTree spTree root 1                  -- Either returns a spanningTree (Right) or a list of cycles (Left)
@@ -61,8 +60,7 @@ mcrR root candidates spTree
     candidates'          = (map snd es) \\ [pivot]                            -- the edge candidates for the next iteration are the ones that have a lambda which is smaller or equal than the pivot lambda
     spTree'              = pivot : filter (\e -> target e /= w) spTree        -- the new spanningTree is the old one, with the one edge replaced by the pivot edge
     orderTuples x y      = compare (fst x) (fst y)
---    Left (bottleneck:_)  = pmapAndSpanningTree spTree' root 1                 -- if there is a cycle, the pmapAndSpanningTree (which uses bf) will find it
-    Left (bottleneck:_)  = bellmanFord (evalEdges 1 spTree') v                 -- if there is a cycle, the pmapAndSpanningTree (which uses bf) will find it
+    ancestorPath         = findPathInTreeEdgeList spTree w v
    
 
 {-

@@ -34,14 +34,15 @@ bellmanFord' :: (Ord (e l), Ord l, WeightedEdges e)
   -> Int
   -> Either [[e l]] (M.Map l (Weight, [e l])) 
 bellmanFord' es mmap ns c | mmap == mmap' = Right $ M.map (\(a,b,_) -> (a,b)) mmap -- remove the boolean from the M.Map, so only provide the weight and path
-                          | hasCycles     = Left $ map (\(_,p,_) -> p) $ M.elems cycles
+                          | hasCycles     = Left $ M.elems cycles -- $ map (\(_,p,_) -> p) $ M.elems cycles
 --                          | c == 0 && mmap' /= mmap = Nothing
                           | c < 0        = error "Bellmanford error"
                           | otherwise     = bellmanFord' es mmap' ns (c-1)
   where
     mmap' = foldl (bfNodeUpdate es) mmap $ ns -- 1 BellmanFord iteration
-    cycles = M.filter (\(_,_,b) -> b) mmap'
+    cycles = M.mapWithKey removeNonCyclicPart $ M.filter (\(_,_,b) -> b) mmap'
     hasCycles = length cycles > 0
+    removeNonCyclicPart lbl (w, path, _) = dropWhile (\edge -> source edge /= lbl) path
 
 {-
     bfNodeUpdate looks at all the outgoing edges from a node n, and updates the mmap 
@@ -61,15 +62,13 @@ bfNodeUpdate es mmap n
       efn             = edgesFromNode n es -- all edges from the source node.
       Just (w,ptsn,_) = val                -- (weight, path to source node, and isCycle bool)
 --      update m e = M.insertWith min (target e) (w', ptsn', isCycle) m -- Shortest path
-      update m e = M.insertWith max (target e) (w', ptsn', isCycle) m  -- Longest path
+      update m e = M.insertWith max' (target e) (w', ptsn', isCycle) m  -- Longest path
         where
           isCycle    = (target e) `elem` (map source ptsn ++ map target ptsn) || isSelfEdge -- if there is a self edge, the path is empty, so check explicitly
           isSelfEdge = target e == source e
           ptsn'      =  ptsn ++ [e]    -- path to current node is path to source node + edge to current node
           w'         = w + weight e
-      
-
-
+          max' s@(w1, _, _) t@(w2, _, _) = if w1 > w2 then s else t     -- insertWith max' compares new value s with old value t
 
 edgesFromNode :: (Eq l, Edges e) => l -> [e l] -> [e l]
 edgesFromNode n es = filter (\e -> (source e) == n) es
