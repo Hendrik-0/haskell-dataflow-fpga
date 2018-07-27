@@ -121,6 +121,33 @@ hsdf3 = Graph (M.fromList
               --, HSDFEdge 'b' 'a' 0
               ])
 
+hsdf4 = Graph (M.fromList
+              [('a', HSDFNode 'a' 4)
+              ,('b', HSDFNode 'b' 3)
+              ,('c', HSDFNode 'c' 5)
+              ])
+              ([HSDFEdge 'a' 'a' 1
+              , HSDFEdge 'a' 'b' 0
+              , HSDFEdge 'b' 'a' 1
+              , HSDFEdge 'b' 'c' 0
+              , HSDFEdge 'c' 'c' 1
+              , HSDFEdge 'c' 'b' 0
+              ])
+
+hsdf5 = Graph (M.fromList
+              [('a', HSDFNode 'a' 1)
+              ,('b', HSDFNode 'b' 1)
+              ,('c', HSDFNode 'c' 2)
+              ,('d', HSDFNode 'd' 1)
+              ])
+              ([HSDFEdge 'a' 'b' 1
+              , HSDFEdge 'a' 'c' 1
+              , HSDFEdge 'b' 'd' 0
+              , HSDFEdge 'c' 'd' 0
+              , HSDFEdge 'd' 'a' 0
+              ])
+
+
 csdf2 = Graph (M.fromList
               [ ('a', CSDFNode 'a' [2,2])
               ])

@@ -17,9 +17,9 @@ import Debug.Trace
 -}
 mcr :: (Ord l, DFNodes n, DFEdges e)
   => Graph (M.Map l (n l)) [e l]
-  -> (Maybe Weight, Maybe [[Edge l]])
+  -> (Maybe Weight, Maybe [Edge l])
 mcr g
-  | isLeft pmapSpTree = (Just ratio, Just cycles)                               -- initial spanningTree already contains a cycle
+  | isLeft pmapSpTree = (ratio, Just cycle)                               -- initial spanningTree already contains a cycle
   | otherwise         = mcrR root candidates spTree
     where
       pgraph              = df2parametricGraph g                                    -- convert dataflow graph to a graph conting parametric distances
@@ -29,14 +29,14 @@ mcr g
       Left cycles         = pmapSpTree
       Right (pmap,spTree) = pmapSpTree
       candidates          = edges pgraph \\ spTree                              -- remove all the spanningTree edges from the candidate edges, so that they dont apear again the in spanningTree if they disapear.
-      ratio               = maximum $ map mcrFromParametricCycle cycles         -- if initial tree already contains a cycle, this is the MCR
+      (ratio,cycle)       = maximum $ zip (map mcrFromParametricCycle cycles) cycles        -- if initial tree already contains a cycle, this is the MCR
 
 mcrFromParametricCycle :: ParametricEdges e
   => [e l]
-  -> Weight
+  -> Maybe Weight
 mcrFromParametricCycle c
-  | tokens >0 = w/ (tokens  % 1)
-  | otherwise = error "deadlock"
+  | tokens == 0 = Nothing
+  | otherwise   = Just $ w/ (tokens  % 1)
     where 
       (tokens, w) = sum $ map pdistance c
   
@@ -45,9 +45,9 @@ mcrR :: (Ord l, Eq (e l), ParametricEdges e)
   => l
   -> [e l]
   -> [e l]
-  -> (Maybe Weight, Maybe [[Edge l]])
+  -> (Maybe Weight, Maybe [Edge l])
 mcrR root candidates spTree
-  | null es               = (Nothing, Nothing )                    -- no now edges found to add
+  | null es               = (Nothing, Nothing)                    -- no now edges found to add, graph is not cyclic?
   | isAncestor spTree v w = (Just lambda, Just bottleneck)               -- Does the newly found edge form a cycle?
   | otherwise             = mcrR root candidates' spTree'
   where
@@ -61,7 +61,8 @@ mcrR root candidates spTree
     candidates'          = (map snd es) \\ [pivot]                            -- the edge candidates for the next iteration are the ones that have a lambda which is smaller or equal than the pivot lambda
     spTree'              = pivot : filter (\e -> target e /= w) spTree        -- the new spanningTree is the old one, with the one edge replaced by the pivot edge
     orderTuples x y      = compare (fst x) (fst y)
-    Left bottleneck      = pmapAndSpanningTree spTree' root 1                 -- if there is a cycle, the pmapAndSpanningTree (which uses bf) will find it
+--    Left (bottleneck:_)  = pmapAndSpanningTree spTree' root 1                 -- if there is a cycle, the pmapAndSpanningTree (which uses bf) will find it
+    Left (bottleneck:_)  = bellmanFord (evalEdges 1 spTree') v                 -- if there is a cycle, the pmapAndSpanningTree (which uses bf) will find it
    
 
 {-
