@@ -70,13 +70,13 @@ instance DFEdges DFEdge where
 
 
 instance (Show n) => Show (DFEdge n) where
-  show (HSDFEdge s d t) = (show s) ++ "--" ++ (show t) ++ "-->" ++ (show d)
-  show (SDFEdge s d t pr cr) = (show s) ++ (show pr)  ++ "--" ++ (show t) ++ "-->" ++ (show cr) ++ (show d)
-  show (CSDFEdge s d t prv crv) = (show s) ++ (show prv) ++ "--" ++ (show t) ++ "-->" ++ (show crv) ++ (show d)
+  show (HSDFEdge s d t) = (show s) ++ "--(" ++ (show t) ++ ")-->" ++ (show d)
+  show (SDFEdge s d t pr cr) = (show s) ++ (show pr)  ++ "--(" ++ (show t) ++ ")-->" ++ (show cr) ++ (show d)
+  show (CSDFEdge s d t prv crv) = (show s) ++ (show prv) ++ "--(" ++ (show t) ++ ")-->" ++ (show crv) ++ (show d)
 
 
 
 instance (Show l) => Show (DFNode l) where
-  show n = show (label n)
+  show n = show (label n) ++ show (wcet n)
 
 

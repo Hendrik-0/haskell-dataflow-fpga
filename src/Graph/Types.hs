@@ -125,8 +125,8 @@ instance (Show n, Show e) => Show (Graph n e) where
 
 
 
-instance (Ord n) => Ord (Edge n) where
-  compare a b = compare (weight a) (weight b)
+--instance (Ord n) => Ord (Edge n) where
+--  compare a b = compare (weight a) (weight b)
 
 
 instance (Num a, Num b) => Num (a,b) where

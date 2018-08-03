@@ -29,7 +29,9 @@ mcr g
       Left cycles         = pmapSpTree
       Right (pmap,spTree) = pmapSpTree
       candidates          = edges pgraph \\ spTree                              -- remove all the spanningTree edges from the candidate edges, so that they dont apear again the in spanningTree if they disapear.
-      (ratio,cycle)       = maximum $ zip (map mcrFromParametricCycle cycles) cycles        -- if initial tree already contains a cycle, this is the MCR
+      --(ratio,cycle)       = maximum $ zip (map mcrFromParametricCycle cycles) cycles        -- if initial tree already contains a cycle, this is the MCR
+      (ratio,cycle)       = foldl1 max' $ zip (map mcrFromParametricCycle cycles) cycles       -- if initial tree already contains a cycle, this is the MCR
+      max' s@(r1,_) t@(r2,_) = if r1 > r2 then s else t
 
 mcrFromParametricCycle :: ParametricEdges e
   => [e l]

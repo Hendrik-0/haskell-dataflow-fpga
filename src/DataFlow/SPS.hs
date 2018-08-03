@@ -9,43 +9,96 @@ import DataFlow.MaxCycleRatio
 
 import qualified Data.Map as M
 import qualified Data.List as L
+import Data.Maybe
 
-sps :: 
-    (DFEdges e, Ord l, DFNodes n) =>
-    Graph (M.Map l (n l)) [e l] ->
-    M.Map l (Ratio Integer, Ratio Integer)
+
+
+sps :: (DFEdges e, Ord l, DFNodes n, Eq (e l))
+  => Graph (M.Map l (n l)) [e l]
+  -> Maybe (M.Map l (Ratio Integer, Ratio Integer))
 sps graph
-    = M.map schedule mmap
+  | isJust mRatio = Just periods
+  | otherwise     = Nothing
     where
-      (Just ratio, Just (c:cs))  = mcr graph
-      root                       = source c
-      pgraph                     = edges $ df2parametricGraph graph
-      Right mmap                 = bellmanFord (evalEdges ratio pgraph) root
-      schedule (w, _)            = (w, ratio)
+      Just ratio        = mRatio
+      Just (c:_)        = mCycle
+      apxGraph          = singleRateApx graph
+      (mRatio, mCycle)  = mcr apxGraph
+      root              = source c                                   -- take a node from the cycle
+      pGraph            = edges $ df2parametricGraph apxGraph        -- convert graph to parametric graph
+      Right mmap        = bellmanFord (evalEdges ratio pGraph) root  -- evaulate the graph with the MCR, bellman ford will not provide a cycle, because the nr of tokens on a the cycle is 0
+      m                 = modulus graph
+      q                 = repetitionVector graph
+      periods           = M.intersectionWith f mmap q                -- update all periods with the repetition vector and modulus, update all start times with periods
+      f (s,_) qi = (s', p)
+        where
+          s' = s - ((floor $ s/p)%1)*p  -- modulo
+          p = ratio * (m%qi)
+      
 
+
+singleRateApx
+  :: (Eq (e l), Ord l, DFNodes n, DFEdges e)
+  => Graph (M.Map l (n l)) [e l]                -- DataFlowGraph
+  -> Graph (M.Map l (DFNode l)) [DFEdge l]      -- HSDFGraph
 singleRateApx graph@(Graph ns es)
-    = Graph ns' es'
+  = Graph ns' es'
     where
       m     = modulus graph
       q     = repetitionVector graph
       s     = normalizationVector graph
       ns'   = M.map upperbound ns
-      es'   = map (approximate s) es
+      es'   = map (approximateEdge s) es
 
+upperbound :: DFNodes n 
+  => n l        -- DFNode
+  -> DFNode l   -- HSDFNode
 upperbound node
-    = HSDFNode (label node) (maximum (wcet node))
+  = HSDFNode (label node) (maximum (wcet node))
 
-approximate s edge
-    = HSDFEdge (source edge) (target edge) (numerator $ (w % 1) * toks)
+
+approximateEdge :: (DFEdges e, Eq (e l)) 
+  => [(e l, Integer)] -- normalization vector
+  -> e l              -- edge
+  -> DFEdge l         -- hsdf approximation
+approximateEdge s edge
+  = HSDFEdge (source edge) (target edge) (numerator $ (w % 1) * toks)
     where
       Just w      = L.lookup edge s
-      toks        = minimum [delta ps cs | ps <- L.inits (production edge), cs <- L.inits (consumption edge)]
-      psum        = sum $ production edge
-      csum        = sum $ consumption edge
-      plen        = fromIntegral $ length $ production edge
-      clen        = fromIntegral $ length $ consumption edge
+      toks        = minimum [delta ps cs | ps <- L.inits prod, cs <- L.inits cons]
+      prod        = production edge
+      cons        = consumption edge
+      psum        = sum prod
+      csum        = sum cons
+      plen        = fromIntegral $ length prod
+      clen        = fromIntegral $ length cons
       g           = gcd psum csum
       delta ps cs = (g * ceiling ((tokens edge + sum ps - sum cs + 1) % g) % 1) - (i1 * psum) % plen + (j * csum) % clen
                   where
                     i1 = 1 + fromIntegral (length ps)
                     j  = fromIntegral (length cs)
+
+
+
+--printSchedule :: Maybe (M.Map l (Ratio Integer, Ratio Integer)) -> String
+--printSchedule Nothing = "N"
+--printSchedule g@(Graph ns es)
+--  = putStr $ concat $  M.elems mmap'
+--    where
+--      Just mmap = sps g
+--      mmap' = M.mapWithKey prnt mmap
+--      prnt l (startTime, period) = (show l) ++ line maxPeriod (numerator period) (numerator startTime) exTime
+--        where
+--          exTime = maximum (wcet n)
+--          Just n = M.lookup l ns
+--      line gp p st ex = zipWith f rs ls ++ "\r\n"
+--        where
+--          f x ys        = if x `elem` ys then '|' else '_'
+--          rs            = [0..gp]
+--          ls            = repeat (concat $ pp gp p st ex)
+--          pp gp p st ex = [s | x <- [st..gp], (x-st) `mod` p == 0, let s = [x..(x+ex-1)]]
+--          
+--      maxPeriod = numerator $ M.foldl max' 0 mmap
+--      max' r1 (_,r2) = max r1 r2
+--
+

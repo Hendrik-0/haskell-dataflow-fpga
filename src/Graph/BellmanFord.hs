@@ -12,7 +12,7 @@ import qualified Data.Set as S
     a M.Map containing (weight, path to node, is a cycle) for each node,
     or a list of cycles, which is a list of paths in which each paths forms a cycle.
 -}
-bellmanFord :: (Ord (e l), Ord l, WeightedEdges e) 
+bellmanFord :: (Eq (e l), Ord l, WeightedEdges e) 
   => [e l]
   -> l
   -> Either [[e l]] (M.Map l (Weight, [e l]))
@@ -27,7 +27,7 @@ bellmanFord es root
     a M.Map containing (weight, path to node, is a cycle) for each node,
     or a list cycles, which is a list paths.
 -}
-bellmanFord' :: (Ord (e l), Ord l, WeightedEdges e) 
+bellmanFord' :: (Eq (e l), Ord l, WeightedEdges e) 
   => [e l]
   -> M.Map l (Weight, [e l], Bool) 
   -> S.Set l
@@ -49,7 +49,7 @@ bellmanFord' es mmap ns c | mmap == mmap' = Right $ M.map (\(a,b,_) -> (a,b)) mm
     if the outgoing edges reach nodes with a shorter/longer path.
     the node, paths, and ifCycle is stored in the M.Map
 -}
-bfNodeUpdate :: (Ord (e l), Ord l, WeightedEdges e) 
+bfNodeUpdate :: (Eq (e l), Ord l, WeightedEdges e) 
   => [e l] 
   -> M.Map l (Weight, [e l], Bool) 
   -> l
