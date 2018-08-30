@@ -7,6 +7,7 @@ import Data.Tuple
 
 import DataFlow
 import Graph
+import Hardware
 
 cwgraph = Graph (M.fromList
               [('a', Node 'a')
@@ -151,5 +152,23 @@ hsdf5 = Graph (M.fromList
 csdf2 = Graph (M.fromList
               [ ('a', CSDFNode 'a' [2,2])
               ])
-              ([CSDFEdge 'a' 'a' 1 [1,2] [1,2]
+              ([CSDFEdge 'a' 'a' 1 [2,1] [1,2]
+              ])
+
+
+
+bgraph = Graph (M.fromList
+              [('a', HSDFNode 'a' 1)
+              ,('b', HSDFNode 'b' 1)
+              ,('c', HSDFNode 'c' 0)
+              ,('d', HSDFNode 'd' 0)
+              ,('e', HSDFNode 'e' 0)
+              ])
+              ([SDFEdge 'a' 'b' 0 8 1
+              , SDFEdge 'b' 'c' 0 1 1
+              , SDFEdge 'b' 'e' 0 1 8
+              , SDFEdge 'c' 'b' 1 1 1
+              , SDFEdge 'c' 'd' 0 1 8
+              , SDFEdge 'd' 'a' 1 1 1
+              , SDFEdge 'e' 'c' 7 8 1
               ])
