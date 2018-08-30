@@ -12,7 +12,7 @@ import qualified Data.List as L
 import Data.Maybe
 
 
-
+-- SPS provides maybe a M.Map with the node label as key, and a tuple with (startTime, period)
 sps :: (DFEdges e, Ord l, DFNodes n, Eq (e l))
   => Graph (M.Map l (n l)) [e l]
   -> Maybe (M.Map l (Ratio Integer, Ratio Integer))
@@ -79,8 +79,15 @@ approximateEdge s edge
                     j  = fromIntegral (length cs)
 
 
+printSchedule :: Show l => Maybe (M.Map l (Ratio Integer, Ratio Integer)) -> IO ()
+printSchedule Nothing = putStr "N" 
+printSchedule (Just mmap) = putStr $ concat $ M.elems (M.mapWithKey p mmap) where
+  p l (st,period) = "node: " ++ (show l) ++ ",   startTime: " ++ st' ++ ", \t period: " ++ period' ++ "\r\n" where
+    st'     | denominator st == 1     = show (numerator st)
+            | otherwise               = show st
+    period' | denominator period == 1 = show (numerator period)
+            | otherwise               = show period
 
---printSchedule :: Maybe (M.Map l (Ratio Integer, Ratio Integer)) -> String
 --printSchedule Nothing = "N"
 --printSchedule g@(Graph ns es)
 --  = putStr $ concat $  M.elems mmap'
