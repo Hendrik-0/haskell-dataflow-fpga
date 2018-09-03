@@ -5,10 +5,6 @@ module DataFlow
 , module DataFlow.NormalizationVector
 , module DataFlow.MaxCycleRatio
 , module DataFlow.SPS
---, modulus
---, mcr
---, repetitionVector
---, normalizationVector 
 ) where
 
 import DataFlow.Types
