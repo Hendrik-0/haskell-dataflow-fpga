@@ -9,6 +9,8 @@ import DataFlow
 import Graph
 import Hardware
 
+import TestBench_MXV
+
 cwgraph = Graph (M.fromList
               [('a', Node 'a')
               ,('b', Node 'b')
@@ -172,3 +174,53 @@ bgraph = Graph (M.fromList
               , SDFEdge 'd' 'a' 1 1 1
               , SDFEdge 'e' 'c' 7 8 1
               ])
+
+
+fgraph = Graph (M.fromList
+              [("ii", HSDFNode "ii" 0)
+              ,("hi", HSDFNode "hi" 3)
+              ,("zi", HSDFNode "zi" 0)
+
+              ,("if", HSDFNode "if" 0)
+
+              ,("+0", HSDFNode "+0" 1)
+              ,("+1", HSDFNode "+1" 1)
+              ,("+2", HSDFNode "+2" 1)
+              ,("+3", HSDFNode "+3" 1)
+
+              ,("iz", HSDFNode "iz" 0)
+              ,("gz", HSDFNode "gz" 2)
+              ,("zz", HSDFNode "zz" 0)
+
+              ,("zf", HSDFNode "zf" 0)
+              ])
+              ([SDFEdge "ii" "hi" 0 8 1
+              , SDFEdge "hi" "zi" 0 1 8
+              , SDFEdge "zi" "ii" 1 1 1
+
+              , SDFEdge "if" "+0" 0 1 1
+              , SDFEdge "if" "+1" 0 1 1
+              , SDFEdge "if" "+2" 0 1 1
+              , SDFEdge "if" "+3" 0 1 1
+              , SDFEdge "if" "ii" 0 1 1
+
+              , SDFEdge "zi" "+0" 0 1 1
+              , SDFEdge "+0" "+1" 0 1 1
+              , SDFEdge "+1" "+2" 0 1 1
+              , SDFEdge "+2" "+3" 0 1 1
+              , SDFEdge "+3" "iz" 0 1 1
+
+              , SDFEdge "iz" "gz" 0 3 1
+              , SDFEdge "gz" "zz" 0 1 3
+              , SDFEdge "zz" "iz" 1 1 1
+
+              , SDFEdge "zz" "zf" 1 1 1
+
+              , SDFEdge "zf" "if" 1 1 1
+              ])
+
+
+
+
+-- gvim unicode: Insert mode -> Ctrl+Shift+U
+--unicode • = 2022
