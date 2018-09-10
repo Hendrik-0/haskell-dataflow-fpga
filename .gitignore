@@ -1,4 +1,6 @@
 *.hi
 *.o
 **/.swp
+*.code-workspace
+*.vscode/
 
