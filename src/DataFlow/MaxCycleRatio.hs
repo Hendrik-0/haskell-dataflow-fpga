@@ -15,12 +15,12 @@ import Debug.Trace
 {-
     MaxCycleRatio
 -}
-mcr :: (Ord l, DFNodes n, DFEdges e)
+maxCycleRatio :: (Ord l, DFNodes n, DFEdges e)
   => Graph (M.Map l (n l)) [e l]
   -> (Maybe Weight, Maybe [Edge l])
-mcr g
+maxCycleRatio g
   | isLeft pmapSpTree = (ratio, Just cycle)                               -- initial spanningTree already contains a cycle
-  | otherwise         = mcrR root candidates spTree
+  | otherwise         = maxCycleRatioR root candidates spTree
     where
       pgraph              = df2parametricGraph g                                    -- convert dataflow graph to a graph conting parametric distances
       (root:_)            = M.keys $ nodes g                                        -- pick a "random" node as root
@@ -29,28 +29,28 @@ mcr g
       Left cycles         = pmapSpTree
       Right (pmap,spTree) = pmapSpTree
       candidates          = edges pgraph \\ spTree                              -- remove all the spanningTree edges from the candidate edges, so that they dont apear again the in spanningTree if they disapear.
-      --(ratio,cycle)       = maximum $ zip (map mcrFromParametricCycle cycles) cycles        -- if initial tree already contains a cycle, this is the MCR
-      (ratio,cycle)       = foldl1 max' $ zip (map mcrFromParametricCycle cycles) cycles       -- if initial tree already contains a cycle, this is the MCR
+      --(ratio,cycle)       = maximum $ zip (map maxCycleRatioFromParametricCycle cycles) cycles        -- if initial tree already contains a cycle, this is the MCR
+      (ratio,cycle)       = foldl1 max' $ zip (map maxCycleRatioFromParametricCycle cycles) cycles       -- if initial tree already contains a cycle, this is the MCR
       max' s@(r1,_) t@(r2,_) = if r1 > r2 then s else t
 
-mcrFromParametricCycle :: ParametricEdges e
+maxCycleRatioFromParametricCycle :: ParametricEdges e
   => [e l]
   -> Maybe Weight
-mcrFromParametricCycle c
+maxCycleRatioFromParametricCycle c
   | tokens == 0 = Nothing
   | otherwise   = Just $ w/ (tokens  % 1)
     where 
       (tokens, w) = sum $ map pdistance c
   
-mcrR :: (Ord l, Eq (e l), ParametricEdges e)
+maxCycleRatioR :: (Ord l, Eq (e l), ParametricEdges e)
   => l
   -> [e l]
   -> [e l]
   -> (Maybe Weight, Maybe [e l])
-mcrR root candidates spTree
+maxCycleRatioR root candidates spTree
   | null es               = (Nothing, Nothing)                    -- no now edges found to add, graph is not cyclic?
   | isJust ancestorPath   = (Just lambda, fmap (pivot:) ancestorPath)
-  | otherwise             = mcrR root candidates' spTree'
+  | otherwise             = maxCycleRatioR root candidates' spTree'
   where
     pmapSpTree           = pmapAndSpanningTree spTree root 1                  -- Either returns a spanningTree (Right) or a list of cycles (Left)
     Left cycles          = pmapSpTree                                         -- This should never occur, since the incomming tree never has a cycle

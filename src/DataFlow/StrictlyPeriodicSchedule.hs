@@ -1,4 +1,4 @@
-module DataFlow.SPS where
+module DataFlow.StrictlyPeriodicSchedule where
 
 import Graph
 import DataFlow.Types
@@ -13,28 +13,41 @@ import Data.Maybe
 
 
 -- SPS provides maybe a M.Map with the node label as key, and a tuple with (startTime, period)
-sps :: (DFEdges e, Ord l, DFNodes n, Eq (e l))
+strictlyPeriodicSchedule :: (DFEdges e, Ord l, DFNodes n, Eq (e l))
   => Graph (M.Map l (n l)) [e l]
   -> Maybe (M.Map l (Ratio Integer, Ratio Integer))
-sps graph
-  | isJust mRatio = Just periods
+strictlyPeriodicSchedule graph
+  | isJust mcr' = Just periods
   | otherwise     = Nothing
     where
-      Just ratio        = mRatio
+      Just mcr          = mcr'
       Just (c:_)        = mCycle
       apxGraph          = singleRateApx graph
-      (mRatio, mCycle)  = mcr apxGraph
+      (mcr', mCycle)    = maxCycleRatio apxGraph
       root              = source c                                   -- take a node from the cycle
       pGraph            = edges $ df2parametricGraph apxGraph        -- convert graph to parametric graph
-      Right mmap        = bellmanFord (evalEdges ratio pGraph) root  -- evaulate the graph with the MCR, bellman ford will not provide a cycle, because the nr of tokens on a the cycle is 0
+      Right mmap        = bellmanFord (evalEdges mcr pGraph) root  -- evaulate the graph with the MCR, bellman ford will not provide a cycle, because the nr of tokens on a the cycle is 0
       m                 = modulus graph
       q                 = repetitionVector graph
       periods           = M.intersectionWith f mmap q                -- update all periods with the repetition vector and modulus, update all start times with periods
       f (s,_) qi = (s', p)
         where
-          s' = s - ((floor $ s/p)%1)*p  -- modulo
-          p = ratio * (m%qi)
+          s' = s + mcr*((m%qi) -1)
+          p = mcr * (m%qi)
       
+strictlyPeriodicScheduleWithExTime :: (DFEdges e, Ord l, DFNodes n, Eq (e l))
+  => Graph (M.Map l (n l)) [e l]
+  -> Maybe (M.Map l (Ratio Integer, Ratio Integer, Integer))
+strictlyPeriodicScheduleWithExTime graph 
+  | isJust sps' = Just sps
+  | otherwise   = Nothing
+    where
+      sps' = strictlyPeriodicSchedule graph
+      sps = M.mapWithKey (addEx graph) (fromJust sps')
+      addEx graph k (s,p) = (s,p,ex)
+        where
+          ex = maximum $ wcet n
+          Just n = M.lookup k (nodes graph)
 
 
 singleRateApx

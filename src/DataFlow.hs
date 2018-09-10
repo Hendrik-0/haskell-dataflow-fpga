@@ -4,7 +4,7 @@ module DataFlow
 , module DataFlow.Modulus
 , module DataFlow.NormalizationVector
 , module DataFlow.MaxCycleRatio
-, module DataFlow.SPS
+, module DataFlow.StrictlyPeriodicSchedule
 ) where
 
 import DataFlow.Types
@@ -12,7 +12,7 @@ import DataFlow.RepetitionVector
 import DataFlow.Modulus
 import DataFlow.NormalizationVector
 import DataFlow.MaxCycleRatio
-import DataFlow.SPS
+import DataFlow.StrictlyPeriodicSchedule
 
 
 
