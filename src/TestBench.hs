@@ -11,6 +11,8 @@ import Hardware
 
 import TestBench_MXV
 
+import SVGWriter
+
 cwgraph = Graph (M.fromList
               [('a', Node 'a')
               ,('b', Node 'b')
@@ -175,6 +177,15 @@ bgraph = Graph (M.fromList
               , SDFEdge 'e' 'c' 7 8 1
               ])
 
+sgraph = Graph (M.fromList
+              [("ii", HSDFNode "ii" 0)
+              ,("hi", HSDFNode "hi" 3)
+              ,("zi", HSDFNode "zi" 0)
+              ])
+              ([SDFEdge "ii" "hi" 0 8 1
+              , SDFEdge "hi" "zi" 0 1 8
+              , SDFEdge "zi" "ii" 1 1 1
+              ])
 
 fgraph = Graph (M.fromList
               [("ii", HSDFNode "ii" 0)
@@ -210,8 +221,8 @@ fgraph = Graph (M.fromList
               , SDFEdge "+2" "+3" 0 1 1
               , SDFEdge "+3" "iz" 0 1 1
 
-              , SDFEdge "iz" "gz" 0 3 1
-              , SDFEdge "gz" "zz" 0 1 3
+              , SDFEdge "iz" "gz" 0 8 1
+              , SDFEdge "gz" "zz" 0 1 8
               , SDFEdge "zz" "iz" 1 1 1
 
               , SDFEdge "zz" "zf" 1 1 1
@@ -219,7 +230,104 @@ fgraph = Graph (M.fromList
               , SDFEdge "zf" "if" 1 1 1
               ])
 
+b0 = Graph (M.fromList
+              [("Ia", HSDFNode "Ia" 0)
+              ,("aa", HSDFNode "aa" 3)
+              ,("Za", HSDFNode "Za" 0)
 
+              ,("If", HSDFNode "If" 0)
+              ,("ff", HSDFNode "ff" 4)
+              ,("Zf", HSDFNode "Zf" 0)
+
+              ,("Ic", HSDFNode "Ic" 0)
+              ,("cc", HSDFNode "cc" 2)
+              ,("Zc", HSDFNode "Zc" 0)
+              ])
+              ([SDFEdge "Ia" "aa" 0 8 1
+              , SDFEdge "aa" "Za" 0 1 8
+              , SDFEdge "Za" "Ia" 1 1 1
+
+              , SDFEdge "Za" "If" 0 1 1
+
+              , SDFEdge "If" "ff" 0 1 1
+              , SDFEdge "ff" "Zf" 0 1 1
+              , SDFEdge "Zf" "If" 1 1 1
+
+              , SDFEdge "Zf" "Ic" 0 1 1
+
+              , SDFEdge "Ic" "cc" 0 8 1
+              , SDFEdge "cc" "Zc" 0 1 8
+              , SDFEdge "Zc" "Ic" 1 1 1
+
+              , SDFEdge "Zc" "Ia" 1 1 1              
+              ])
+
+b1 = Graph (M.fromList
+              [("Ia", HSDFNode "Ia" 0)
+              ,("aa", HSDFNode "aa" 3)
+              ,("Za", HSDFNode "Za" 0)
+
+              ,("Ic", HSDFNode "Ic" 0)
+              ,("cc", HSDFNode "cc" 2)
+              ,("Zc", HSDFNode "Zc" 0)
+              ])
+              ([SDFEdge "Ia" "aa" 0 8 1
+              , SDFEdge "aa" "Za" 0 1 8
+              , SDFEdge "Za" "Ia" 1 1 1
+
+              , SDFEdge "Za" "Ic" 0 1 1
+
+              , SDFEdge "Ic" "cc" 0 8 1
+              , SDFEdge "cc" "Zc" 0 1 8
+              , SDFEdge "Zc" "Ic" 1 1 1
+
+              , SDFEdge "Zc" "Ia" 1 1 1              
+              ])
+
+bb = Graph (M.fromList
+              [("Ia", HSDFNode "Ia" 0)
+              ,("aa", HSDFNode "aa" 3)
+              ,("Za", HSDFNode "Za" 0)
+
+              ,("If", HSDFNode "If" 0)
+              ,("+0", HSDFNode "+0" 1)
+              ,("+1", HSDFNode "+1" 1)
+              ,("+2", HSDFNode "+2" 1)
+              ,("+3", HSDFNode "+3" 1)
+              ,("Zf", HSDFNode "Zf" 0)
+
+              ,("Ic", HSDFNode "Ic" 0)
+              ,("cc", HSDFNode "cc" 2)
+              ,("Zc", HSDFNode "Zc" 0)
+              ])
+              ([SDFEdge "Ia" "aa" 0 8 1
+              , SDFEdge "aa" "Za" 0 1 8
+              , SDFEdge "Za" "Ia" 1 1 1
+
+              , SDFEdge "Za" "If" 0 1 1
+
+
+              , SDFEdge "If" "+0" 0 1 1
+              , SDFEdge "If" "+0" 0 1 1                
+              , SDFEdge "If" "+1" 0 1 1
+              , SDFEdge "If" "+2" 0 1 1
+              , SDFEdge "If" "+3" 0 1 1
+
+              , SDFEdge "+0" "+1" 0 1 1
+              , SDFEdge "+1" "+2" 0 1 1
+              , SDFEdge "+2" "+3" 0 1 1
+              , SDFEdge "+3" "Zf" 0 1 1
+
+              , SDFEdge "Zf" "If" 1 1 1
+
+              , SDFEdge "Zf" "Ic" 0 1 1
+
+              , SDFEdge "Ic" "cc" 0 8 1
+              , SDFEdge "cc" "Zc" 0 1 8
+              , SDFEdge "Zc" "Ic" 1 1 1
+
+              , SDFEdge "Zc" "Ia" 1 1 1              
+              ])
 
 
 -- gvim unicode: Insert mode -> Ctrl+Shift+U
