@@ -13,6 +13,9 @@ import TestBench_MXV
 
 import SVGWriter
 
+hsdfNode l ex = (l,HSDFNode l ex)
+csdfNode l ex = (l,CSDFNode l ex)
+
 cwgraph = Graph (M.fromList
               [('a', Node 'a')
               ,('b', Node 'b')
@@ -42,10 +45,10 @@ wgraph = Graph (M.fromList
 
 -- example graphs:
 sdf  = Graph (M.fromList 
-              [ ('I', HSDFNode 'I' 0)
-              , ('*', HSDFNode '*' 1)
-              , ('f', HSDFNode 'f' 4)
-              , ('Z', HSDFNode 'Z' 0)
+              [ hsdfNode 'I' 0
+              , hsdfNode '*' 1
+              , hsdfNode 'f' 4
+              , hsdfNode 'Z' 0
               ])
               ([SDFEdge 'I' '*' 0 12 1
               , SDFEdge 'I' '*' 0 12 1
@@ -55,9 +58,9 @@ sdf  = Graph (M.fromList
               ])
              
 csdf = Graph (M.fromList                      -- modulus = 36
-              [ ('a', CSDFNode 'a' [2,3])         -- q = 4
-              , ('b', CSDFNode 'b' [2,2])         -- q = 6
-              , ('c', CSDFNode 'c' [3,4])         -- q = 6
+              [ csdfNode 'a' [2,3]         -- q = 4
+              , csdfNode 'b' [2,2]         -- q = 6
+              , csdfNode 'c' [3,4]         -- q = 6
               ])
               ([CSDFEdge 'a' 'a' 1 [1,1] [1,1]    -- weight = 9
               , CSDFEdge 'a' 'b' 0 [1,2] [1,1]    -- weight = 6
@@ -67,12 +70,12 @@ csdf = Graph (M.fromList                      -- modulus = 36
               ])
 
 hsdf = Graph (M.fromList
-              [('a', HSDFNode 'a' 1)
-              ,('b', HSDFNode 'b' 1)
-              ,('c', HSDFNode 'c' 1)
-              ,('d', HSDFNode 'd' 1)
-              ,('e', HSDFNode 'e' 1)
-              ,('f', HSDFNode 'f' 1)
+              [hsdfNode 'a' 1
+              ,hsdfNode 'b' 1
+              ,hsdfNode 'c' 1
+              ,hsdfNode 'd' 1
+              ,hsdfNode 'e' 1
+              ,hsdfNode 'f' 1
               ])
               ([HSDFEdge 'a' 'b' 0
               , HSDFEdge 'a' 'c' 0
@@ -90,10 +93,10 @@ hsdf = Graph (M.fromList
 
 
 hsdf2 = Graph (M.fromList
-              [('b', HSDFNode 'b' 3)
-              ,('d', HSDFNode 'd' 9)
-              ,('a', HSDFNode 'a' 1)
-              ,('c', HSDFNode 'c' 5)
+              [hsdfNode 'b' 3
+              ,hsdfNode 'd' 9
+              ,hsdfNode 'a' 1
+              ,hsdfNode 'c' 5
               ])
               ([HSDFEdge 'b' 'd' 1
               , HSDFEdge 'b' 'c' 1
@@ -106,12 +109,12 @@ hsdf2 = Graph (M.fromList
               ])
 
 hsdf3 = Graph (M.fromList
-              [('a', HSDFNode 'a' 15)
-              ,('b', HSDFNode 'b' 2)
-              ,('c', HSDFNode 'c' 1)
-              ,('d', HSDFNode 'd' 1)
-              ,('e', HSDFNode 'e' 1)
-              ,('f', HSDFNode 'f' 1)
+              [hsdfNode 'a' 15
+              ,hsdfNode 'b' 2
+              ,hsdfNode 'c' 1
+              ,hsdfNode 'd' 1
+              ,hsdfNode 'e' 1
+              ,hsdfNode 'f' 1
               ])
               ([HSDFEdge 'a' 'b' 0
               , HSDFEdge 'a' 'c' 0
@@ -127,9 +130,9 @@ hsdf3 = Graph (M.fromList
               ])
 
 hsdf4 = Graph (M.fromList
-              [('a', HSDFNode 'a' 4)
-              ,('b', HSDFNode 'b' 3)
-              ,('c', HSDFNode 'c' 5)
+              [hsdfNode 'a' 4
+              ,hsdfNode 'b' 3
+              ,hsdfNode 'c' 5
               ])
               ([HSDFEdge 'a' 'a' 1
               , HSDFEdge 'a' 'b' 0
@@ -140,10 +143,10 @@ hsdf4 = Graph (M.fromList
               ])
 
 hsdf5 = Graph (M.fromList
-              [('a', HSDFNode 'a' 1)
-              ,('b', HSDFNode 'b' 1)
-              ,('c', HSDFNode 'c' 2)
-              ,('d', HSDFNode 'd' 1)
+              [hsdfNode 'a' 1
+              ,hsdfNode 'b' 1
+              ,hsdfNode 'c' 2
+              ,hsdfNode 'd' 1
               ])
               ([HSDFEdge 'a' 'b' 1
               , HSDFEdge 'a' 'c' 1
@@ -154,7 +157,7 @@ hsdf5 = Graph (M.fromList
 
 
 csdf2 = Graph (M.fromList
-              [ ('a', CSDFNode 'a' [2,2])
+              [ csdfNode 'a' [2,2]
               ])
               ([CSDFEdge 'a' 'a' 1 [2,1] [1,2]
               ])
@@ -162,11 +165,11 @@ csdf2 = Graph (M.fromList
 
 
 bgraph = Graph (M.fromList
-              [('a', HSDFNode 'a' 1)
-              ,('b', HSDFNode 'b' 1)
-              ,('c', HSDFNode 'c' 0)
-              ,('d', HSDFNode 'd' 0)
-              ,('e', HSDFNode 'e' 0)
+              [hsdfNode 'a' 1
+              ,hsdfNode 'b' 1
+              ,hsdfNode 'c' 0
+              ,hsdfNode 'd' 0
+              ,hsdfNode 'e' 0
               ])
               ([SDFEdge 'a' 'b' 0 8 1
               , SDFEdge 'b' 'c' 0 1 1
@@ -178,9 +181,9 @@ bgraph = Graph (M.fromList
               ])
 
 sgraph = Graph (M.fromList
-              [("ii", HSDFNode "ii" 0)
-              ,("hi", HSDFNode "hi" 3)
-              ,("zi", HSDFNode "zi" 0)
+              [hsdfNode "ii" 0
+              ,hsdfNode "hi" 3
+              ,hsdfNode "zi" 0
               ])
               ([SDFEdge "ii" "hi" 0 8 1
               , SDFEdge "hi" "zi" 0 1 8
@@ -188,22 +191,22 @@ sgraph = Graph (M.fromList
               ])
 
 fgraph = Graph (M.fromList
-              [("ii", HSDFNode "ii" 0)
-              ,("hi", HSDFNode "hi" 3)
-              ,("zi", HSDFNode "zi" 0)
+              [hsdfNode "ii" 0
+              ,hsdfNode "hi" 3
+              ,hsdfNode "zi" 0
 
-              ,("if", HSDFNode "if" 0)
+              ,hsdfNode "if" 0
 
-              ,("+0", HSDFNode "+0" 1)
-              ,("+1", HSDFNode "+1" 1)
-              ,("+2", HSDFNode "+2" 1)
-              ,("+3", HSDFNode "+3" 1)
+              ,hsdfNode "+0" 1
+              ,hsdfNode "+1" 1
+              ,hsdfNode "+2" 1
+              ,hsdfNode "+3" 1
 
-              ,("iz", HSDFNode "iz" 0)
-              ,("gz", HSDFNode "gz" 2)
-              ,("zz", HSDFNode "zz" 0)
+              ,hsdfNode "iz" 0
+              ,hsdfNode "gz" 2
+              ,hsdfNode "zz" 0
 
-              ,("zf", HSDFNode "zf" 0)
+              ,hsdfNode "zf" 0
               ])
               ([SDFEdge "ii" "hi" 0 8 1
               , SDFEdge "hi" "zi" 0 1 8
@@ -231,17 +234,17 @@ fgraph = Graph (M.fromList
               ])
 
 b0 = Graph (M.fromList
-              [("Ia", HSDFNode "Ia" 0)
-              ,("aa", HSDFNode "aa" 3)
-              ,("Za", HSDFNode "Za" 0)
+              [hsdfNode "Ia" 0
+              ,hsdfNode "aa" 3
+              ,hsdfNode "Za" 0
 
-              ,("If", HSDFNode "If" 0)
-              ,("ff", HSDFNode "ff" 4)
-              ,("Zf", HSDFNode "Zf" 0)
+              ,hsdfNode "If" 0
+              ,hsdfNode "ff" 4
+              ,hsdfNode "Zf" 0
 
-              ,("Ic", HSDFNode "Ic" 0)
-              ,("cc", HSDFNode "cc" 2)
-              ,("Zc", HSDFNode "Zc" 0)
+              ,hsdfNode "Ic" 0
+              ,hsdfNode "cc" 2
+              ,hsdfNode "Zc" 0
               ])
               ([SDFEdge "Ia" "aa" 0 8 1
               , SDFEdge "aa" "Za" 0 1 8
@@ -263,13 +266,13 @@ b0 = Graph (M.fromList
               ])
 
 b1 = Graph (M.fromList
-              [("Ia", HSDFNode "Ia" 0)
-              ,("aa", HSDFNode "aa" 3)
-              ,("Za", HSDFNode "Za" 0)
+              [hsdfNode "Ia" 0
+              ,hsdfNode "aa" 3
+              ,hsdfNode "Za" 0
 
-              ,("Ic", HSDFNode "Ic" 0)
-              ,("cc", HSDFNode "cc" 2)
-              ,("Zc", HSDFNode "Zc" 0)
+              ,hsdfNode "Ic" 0
+              ,hsdfNode "cc" 2
+              ,hsdfNode "Zc" 0
               ])
               ([SDFEdge "Ia" "aa" 0 8 1
               , SDFEdge "aa" "Za" 0 1 8
@@ -285,20 +288,20 @@ b1 = Graph (M.fromList
               ])
 
 bb = Graph (M.fromList
-              [("Ia", HSDFNode "Ia" 0)
-              ,("aa", HSDFNode "aa" 3)
-              ,("Za", HSDFNode "Za" 0)
+              [hsdfNode "Ia" 0
+              ,hsdfNode "aa" 3
+              ,hsdfNode "Za" 0
 
-              ,("If", HSDFNode "If" 0)
-              ,("+0", HSDFNode "+0" 1)
-              ,("+1", HSDFNode "+1" 1)
-              ,("+2", HSDFNode "+2" 1)
-              ,("+3", HSDFNode "+3" 1)
-              ,("Zf", HSDFNode "Zf" 0)
+              ,hsdfNode "If" 0
+              ,hsdfNode "+0" 1
+              ,hsdfNode "+1" 1
+              ,hsdfNode "+2" 1
+              ,hsdfNode "+3" 1
+              ,hsdfNode "Zf" 0
 
-              ,("Ic", HSDFNode "Ic" 0)
-              ,("cc", HSDFNode "cc" 2)
-              ,("Zc", HSDFNode "Zc" 0)
+              ,hsdfNode "Ic" 0
+              ,hsdfNode "cc" 2
+              ,hsdfNode "Zc" 0
               ])
               ([SDFEdge "Ia" "aa" 0 8 1
               , SDFEdge "aa" "Za" 0 1 8
@@ -308,7 +311,7 @@ bb = Graph (M.fromList
 
 
               , SDFEdge "If" "+0" 0 1 1
-              , SDFEdge "If" "+0" 0 1 1                
+              , SDFEdge "If" "+0" 0 1 1
               , SDFEdge "If" "+1" 0 1 1
               , SDFEdge "If" "+2" 0 1 1
               , SDFEdge "If" "+3" 0 1 1
@@ -329,6 +332,45 @@ bb = Graph (M.fromList
               , SDFEdge "Zc" "Ia" 1 1 1              
               ])
 
+b4 = Graph (M.fromList
+            [hsdfNode "I"  0
+            ,hsdfNode "+0" 1
+            ,hsdfNode "+1" 1
+            ,hsdfNode "+2" 1
+            ,hsdfNode "+3" 1
+            ,hsdfNode "Z"  0
+            ])
+            ([SDFEdge "I" "+0" 0 1 1
+            , SDFEdge "I" "+0" 0 1 1
+            , SDFEdge "I" "+1" 0 1 1
+            , SDFEdge "I" "+2" 0 1 1
+            , SDFEdge "I" "+3" 0 1 1
 
+            , SDFEdge "+0" "+1" 0 1 1
+            , SDFEdge "+1" "+2" 0 1 1
+            , SDFEdge "+2" "+3" 0 1 1
+            , SDFEdge "+3" "Z"  0 1 1
+
+            , SDFEdge "Z" "I"   1 1 1
+            ])
+
+b5 = Graph (M.fromList
+            [hsdfNode "Ia" 0
+            ,hsdfNode "a"  1
+            ,hsdfNode "Za" 1
+            ,hsdfNode "Ib" 1
+            ,hsdfNode "b"  1
+            ,hsdfNode "Zb" 0
+            ])
+            ([SDFEdge "Ia" "a"  0 1 1
+            , SDFEdge "a" "Za"  0 1 1
+            , SDFEdge "Za" "Ia" 1 1 1
+
+            , SDFEdge "Za" "Ib" 0 1 1
+
+            , SDFEdge "Ib" "b"  0 1 1
+            , SDFEdge "b" "+Zb" 0 1 1
+            , SDFEdge "Zb" "Ib" 1 1 1
+            ])
 -- gvim unicode: Insert mode -> Ctrl+Shift+U
 --unicode • = 2022
