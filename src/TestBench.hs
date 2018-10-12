@@ -44,7 +44,18 @@ wgraph = Graph (M.fromList
               ])
 
 -- example graphs:
-sdf  = Graph (M.fromList 
+sdfp  = Graph (M.fromList 
+              [ hsdfNode "I"   0
+              , hsdfNode "mxv" 5
+              , hsdfNode "Z"   0
+              ])
+              ([SDFEdge "I"   "mxv" 0 12 12
+              , SDFEdge "I"   "mxv" 0 4 4
+              , SDFEdge "mxv" "Z"   0 3 3
+              , SDFEdge "Z"   "I"   1 1  1
+              ])
+
+sdff  = Graph (M.fromList 
               [ hsdfNode 'I' 0
               , hsdfNode '*' 1
               , hsdfNode 'f' 4
@@ -374,3 +385,85 @@ b5 = Graph (M.fromList
             ])
 -- gvim unicode: Insert mode -> Ctrl+Shift+U
 --unicode • = 2022
+
+ro1 = Graph (M.fromList
+  [hsdfNode "I"  0
+  ,hsdfNode "a"  0
+  ,hsdfNode "b"  0
+  ,hsdfNode "c"  0
+  ,hsdfNode "d"  0
+  ,hsdfNode "e"  0
+  ,hsdfNode "fg" 1
+  ,hsdfNode "hi" 1
+  ,hsdfNode "jk" 1
+  ,hsdfNode "l"  1
+  ,hsdfNode "o"  1
+  ,hsdfNode "Z"  0
+  ])
+  (
+  [SDFEdge "I"  "a"  0 1 1
+  ,SDFEdge "I"  "b"  0 1 1
+  ,SDFEdge "I"  "c"  0 1 1
+  ,SDFEdge "I"  "d"  0 1 1
+  ,SDFEdge "I"  "e"  0 1 1
+  ,SDFEdge "a"  "fg" 0 1 1
+  ,SDFEdge "b"  "fg" 0 1 1
+  ,SDFEdge "c"  "fg" 0 1 1
+  ,SDFEdge "d"  "fg" 0 1 1
+  ,SDFEdge "fg" "hi" 0 1 1
+  ,SDFEdge "e"  "hi" 0 1 1
+  ,SDFEdge "hi" "jk" 0 1 1
+  ,SDFEdge "hi" "l"  0 1 1
+  ,SDFEdge "jk" "o"  0 1 1
+  ,SDFEdge "l"  "o"  0 1 1
+  ,SDFEdge "o"  "Z"  0 1 1
+  ,SDFEdge "Z"  "I"  1 1 1
+  ])
+
+ex = Graph (M.fromList
+  [csdfNode "a" [5]
+  ,csdfNode "b" [1]
+  ])
+  (
+  [CSDFEdge "a" "b" 0 [5] [1]
+  ,CSDFEdge "b" "a" 5 [1] [5]
+  ])
+
+exa1 = Graph (M.fromList
+  [csdfNode "a" [5]
+  ,csdfNode "b" [1]
+  ])
+  (
+  [CSDFEdge "a" "b" 0 [5] [0,0,0,0,5]
+  ,CSDFEdge "b" "a" 5 [0,0,0,0,5] [5]
+  ])
+
+
+
+exb1 = Graph (M.fromList
+  [csdfNode "a" [5]
+  ,csdfNode "b" [1]
+  ])
+  (
+  [CSDFEdge "a" "b" 5 [0,0,0,0,5] [1]
+  ,CSDFEdge "b" "a" 0 [1] [0,0,0,0,5]
+  ])
+
+exb2 = Graph (M.fromList
+  [csdfNode "a" [5]
+  ,csdfNode "b" [1]
+  ])
+  (
+  [CSDFEdge "a" "b" 0 [5,0,0,0,0] [1]
+  ,CSDFEdge "b" "a" 5 [1] [5,0,0,0,0]
+  ])
+
+
+exc1 = Graph (M.fromList
+  [csdfNode "a" [5]
+  ,csdfNode "b" [1]
+  ])
+  (
+  [CSDFEdge "a" "b" 0 [0,0,0,0,5] [0,0,0,0,5]
+  ,CSDFEdge "b" "a" 5 [0,0,0,0,5] [0,0,0,0,5]
+  ])
