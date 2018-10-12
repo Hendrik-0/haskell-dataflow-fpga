@@ -431,7 +431,7 @@ ex = Graph (M.fromList
 
 exa1 = Graph (M.fromList
   [csdfNode "a" [5]
-  ,csdfNode "b" [1]
+  ,csdfNode "b" [1,1,1,1,1]
   ])
   (
   [CSDFEdge "a" "b" 0 [5] [0,0,0,0,5]
@@ -441,7 +441,7 @@ exa1 = Graph (M.fromList
 
 
 exb1 = Graph (M.fromList
-  [csdfNode "a" [5]
+  [csdfNode "a" [5,5,5,5,5]
   ,csdfNode "b" [1]
   ])
   (
@@ -450,7 +450,7 @@ exb1 = Graph (M.fromList
   ])
 
 exb2 = Graph (M.fromList
-  [csdfNode "a" [5]
+  [csdfNode "a" [5,5,5,5,5]
   ,csdfNode "b" [1]
   ])
   (
@@ -460,8 +460,8 @@ exb2 = Graph (M.fromList
 
 
 exc1 = Graph (M.fromList
-  [csdfNode "a" [5]
-  ,csdfNode "b" [1]
+  [csdfNode "a" [5,5,5,5,5]
+  ,csdfNode "b" [1,1,1,1,1]
   ])
   (
   [CSDFEdge "a" "b" 0 [0,0,0,0,5] [0,0,0,0,5]
