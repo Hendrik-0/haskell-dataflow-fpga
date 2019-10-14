@@ -101,11 +101,11 @@ instance ParametricEdges Edge where
 
 instance (Show n) => Show (Edge n) where
   --show e = (show $ source e) ++ "-->" ++ (show $ target e)
-  show (Edge s d) = (show s) ++ "-->" ++ (show d)
-  show (WeightedEdge s d w) = (show s) ++ "--(" ++ (show w) ++ ")-->" ++ (show d)
-  show (WeightedMarkedEdge s d w m)  = (show s) ++ "--" ++ (show (m,w)) ++ "-->" ++ (show d) 
+  show (Edge s d) = (show s) ++ "-->" ++ (show d) ++ "\n"
+  show (WeightedEdge s d w) = (show s) ++ "--(" ++ (show w) ++ ")-->" ++ (show d) ++ "\n"
+  show (WeightedMarkedEdge s d w m)  = (show s) ++ "--" ++ (show (m,w)) ++ "-->" ++ (show d) ++ "\n"
   show (ParametricEdge s d w' (m,w)) 
-    = (show s) ++ "--(" ++ sw' ++ ")(" ++ sw ++ ")-->" ++ (show d)
+    = (show s) ++ "--(" ++ sw' ++ ")(" ++ sw ++ ")-->" ++ (show d) ++ "\n"
       where
         sw  | denominator w  == 1 = show (numerator w ) ++ "-" ++ (show m) ++ "l" --"λ"
             | otherwise           = show (          w ) ++ "-" ++ (show m) ++ "l" --"λ"
