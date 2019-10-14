@@ -17,30 +17,30 @@ hsdfNode l ex = (l,HSDFNode l ex)
 csdfNode l ex = (l,CSDFNode l ex)
 
 cwgraph = Graph (M.fromList
-              [('a', Node 'a')
-              ,('b', Node 'b')
+              [("a", Node "a")
+              ,("b", Node "b")
               ])
-              ([WeightedEdge 'a' 'b' (-1)
-              , WeightedEdge 'b' 'a' (-1)
-              , WeightedEdge 'a' 'a' (-1)
+              ([WeightedEdge "a" "b" (-1)
+              , WeightedEdge "b" "a" (-1)
+              , WeightedEdge "a" "a" (-1)
               ])
 
 wgraph = Graph (M.fromList
-              [('S', Node 'S')
-              ,('A', Node 'A')
-              ,('B', Node 'B')
-              ,('C', Node 'C')
-              ,('D', Node 'D')
-              ,('E', Node 'E')
+              [("S", Node "S")
+              ,("A", Node "A")
+              ,("B", Node "B")
+              ,("C", Node "C")
+              ,("D", Node "D")
+              ,("E", Node "E")
               ])
-              ([WeightedEdge 'S' 'A' 10
-              , WeightedEdge 'S' 'E' 8
-              , WeightedEdge 'E' 'D' 1
-              , WeightedEdge 'D' 'A' (-4)
-              , WeightedEdge 'D' 'C' (-1)
-              , WeightedEdge 'A' 'C' 2
-              , WeightedEdge 'C' 'B' (-2)
-              , WeightedEdge 'B' 'A' 1
+              ([WeightedEdge "S" "A" 10
+              , WeightedEdge "S" "E" 8
+              , WeightedEdge "E" "D" 1
+              , WeightedEdge "D" "A" (-4)
+              , WeightedEdge "D" "C" (-1)
+              , WeightedEdge "A" "C" 2
+              , WeightedEdge "C" "B" (-2)
+              , WeightedEdge "B" "A" 1
               ])
 
 -- example graphs:
@@ -56,139 +56,139 @@ sdfp  = Graph (M.fromList
               ])
 
 sdff  = Graph (M.fromList 
-              [ hsdfNode 'I' 0
-              , hsdfNode '*' 1
-              , hsdfNode 'f' 4
-              , hsdfNode 'Z' 0
+              [ hsdfNode "I" 0
+              , hsdfNode "*" 1
+              , hsdfNode "f" 4
+              , hsdfNode "Z" 0
               ])
-              ([SDFEdge 'I' '*' 0 12 1
-              , SDFEdge 'I' '*' 0 12 1
-              , SDFEdge '*' 'f' 0 1  4
-              , SDFEdge 'f' 'Z' 0 1  3
-              , SDFEdge 'Z' 'I' 1 1  1
+              ([SDFEdge "I" "*" 0 12 1
+              , SDFEdge "I" "*" 0 12 1
+              , SDFEdge "*" "f" 0 1  4
+              , SDFEdge "f" "Z" 0 1  3
+              , SDFEdge "Z" "I" 1 1  1
               ])
              
 csdf = Graph (M.fromList                      -- modulus = 36
-              [ csdfNode 'a' [2,3]         -- q = 4
-              , csdfNode 'b' [2,2]         -- q = 6
-              , csdfNode 'c' [3,4]         -- q = 6
+              [ csdfNode "a" [2,3]         -- q = 4
+              , csdfNode "b" [2,2]         -- q = 6
+              , csdfNode "c" [3,4]         -- q = 6
               ])
-              ([CSDFEdge 'a' 'a' 1 [1,1] [1,1]    -- weight = 9
-              , CSDFEdge 'a' 'b' 0 [1,2] [1,1]    -- weight = 6
-              , CSDFEdge 'b' 'a' 2 [2,0] [2,1]    -- weight = 6
-              , CSDFEdge 'b' 'c' 0 [1,2] [2,1]    -- weight = 4
-              , CSDFEdge 'c' 'b' 3 [2,1] [1,2]    -- weight = 4
+              ([CSDFEdge "a" "a" 1 [1,1] [1,1]    -- weight = 9
+              , CSDFEdge "a" "b" 0 [1,2] [1,1]    -- weight = 6
+              , CSDFEdge "b" "a" 2 [2,0] [2,1]    -- weight = 6
+              , CSDFEdge "b" "c" 0 [1,2] [2,1]    -- weight = 4
+              , CSDFEdge "c" "b" 3 [2,1] [1,2]    -- weight = 4
               ])
 
-hsdf = Graph (M.fromList
-              [hsdfNode 'a' 1
-              ,hsdfNode 'b' 1
-              ,hsdfNode 'c' 1
-              ,hsdfNode 'd' 1
-              ,hsdfNode 'e' 1
-              ,hsdfNode 'f' 1
+hsdf1 = Graph (M.fromList
+              [hsdfNode "a" 1
+              ,hsdfNode "b" 1
+              ,hsdfNode "c" 1
+              ,hsdfNode "d" 1
+              ,hsdfNode "e" 1
+              ,hsdfNode "f" 1
               ])
-              ([HSDFEdge 'a' 'b' 0
-              , HSDFEdge 'a' 'c' 0
-              , HSDFEdge 'a' 'd' 0
-              , HSDFEdge 'b' 'e' 0
-              , HSDFEdge 'd' 'e' 0
-              , HSDFEdge 'd' 'f' 0
-              , HSDFEdge 'e' 'f' 0
-              , HSDFEdge 'f' 'b' 0
-              , HSDFEdge 'e' 'c' 0
-              , HSDFEdge 'b' 'a' 0
+              ([HSDFEdge "a" "b" 0
+              , HSDFEdge "a" "c" 0
+              , HSDFEdge "a" "d" 0
+              , HSDFEdge "b" "e" 0
+              , HSDFEdge "d" "e" 0
+              , HSDFEdge "d" "f" 0
+              , HSDFEdge "e" "f" 0
+              , HSDFEdge "f" "b" 0
+              , HSDFEdge "e" "c" 0
+              , HSDFEdge "b" "a" 0
               ])
 
 
 
 
 hsdf2 = Graph (M.fromList
-              [hsdfNode 'b' 3
-              ,hsdfNode 'd' 9
-              ,hsdfNode 'a' 1
-              ,hsdfNode 'c' 5
+              [hsdfNode "b" 3
+              ,hsdfNode "d" 9
+              ,hsdfNode "a" 1
+              ,hsdfNode "c" 5
               ])
-              ([HSDFEdge 'b' 'd' 1
-              , HSDFEdge 'b' 'c' 1
-              , HSDFEdge 'b' 'a' 0
-              , HSDFEdge 'a' 'a' 1
-              , HSDFEdge 'a' 'b' 1
-              , HSDFEdge 'a' 'c' 1
-              , HSDFEdge 'd' 'c' 1
-              , HSDFEdge 'c' 'a' 1
+              ([HSDFEdge "b" "d" 1
+              , HSDFEdge "b" "c" 1
+              , HSDFEdge "b" "a" 0
+              , HSDFEdge "a" "a" 1
+              , HSDFEdge "a" "b" 1
+              , HSDFEdge "a" "c" 1
+              , HSDFEdge "d" "c" 1
+              , HSDFEdge "c" "a" 1
               ])
 
 hsdf3 = Graph (M.fromList
-              [hsdfNode 'a' 15
-              ,hsdfNode 'b' 2
-              ,hsdfNode 'c' 1
-              ,hsdfNode 'd' 1
-              ,hsdfNode 'e' 1
-              ,hsdfNode 'f' 1
+              [hsdfNode "a" 15
+              ,hsdfNode "b" 2
+              ,hsdfNode "c" 1
+              ,hsdfNode "d" 1
+              ,hsdfNode "e" 1
+              ,hsdfNode "f" 1
               ])
-              ([HSDFEdge 'a' 'b' 0
-              , HSDFEdge 'a' 'c' 0
-              , HSDFEdge 'a' 'd' 0
-              , HSDFEdge 'a' 'a' 1
-              , HSDFEdge 'b' 'e' 0
-              , HSDFEdge 'd' 'e' 0
-              , HSDFEdge 'd' 'f' 0
-              , HSDFEdge 'e' 'f' 0
-              , HSDFEdge 'f' 'b' 1
-              , HSDFEdge 'e' 'c' 0
-              --, HSDFEdge 'b' 'a' 0
+              ([HSDFEdge "a" "b" 0
+              , HSDFEdge "a" "c" 0
+              , HSDFEdge "a" "d" 0
+              , HSDFEdge "a" "a" 1
+              , HSDFEdge "b" "e" 0
+              , HSDFEdge "d" "e" 0
+              , HSDFEdge "d" "f" 0
+              , HSDFEdge "e" "f" 0
+              , HSDFEdge "f" "b" 1
+              , HSDFEdge "e" "c" 0
+              --, HSDFEdge "b" "a" 0
               ])
 
 hsdf4 = Graph (M.fromList
-              [hsdfNode 'a' 4
-              ,hsdfNode 'b' 3
-              ,hsdfNode 'c' 5
+              [hsdfNode "a" 4
+              ,hsdfNode "b" 3
+              ,hsdfNode "c" 5
               ])
-              ([HSDFEdge 'a' 'a' 1
-              , HSDFEdge 'a' 'b' 0
-              , HSDFEdge 'b' 'a' 1
-              , HSDFEdge 'b' 'c' 0
-              , HSDFEdge 'c' 'c' 1
-              , HSDFEdge 'c' 'b' 0
+              ([HSDFEdge "a" "a" 1
+              , HSDFEdge "a" "b" 0
+              , HSDFEdge "b" "a" 1
+              , HSDFEdge "b" "c" 0
+              , HSDFEdge "c" "c" 1
+              , HSDFEdge "c" "b" 0
               ])
 
 hsdf5 = Graph (M.fromList
-              [hsdfNode 'a' 1
-              ,hsdfNode 'b' 1
-              ,hsdfNode 'c' 2
-              ,hsdfNode 'd' 1
+              [hsdfNode "a" 1
+              ,hsdfNode "b" 1
+              ,hsdfNode "c" 2
+              ,hsdfNode "d" 1
               ])
-              ([HSDFEdge 'a' 'b' 1
-              , HSDFEdge 'a' 'c' 1
-              , HSDFEdge 'b' 'd' 0
-              , HSDFEdge 'c' 'd' 0
-              , HSDFEdge 'd' 'a' 0
+              ([HSDFEdge "a" "b" 1
+              , HSDFEdge "a" "c" 1
+              , HSDFEdge "b" "d" 0
+              , HSDFEdge "c" "d" 0
+              , HSDFEdge "d" "a" 0
               ])
 
 
 csdf2 = Graph (M.fromList
-              [ csdfNode 'a' [2,2]
+              [ csdfNode "a" [2,2]
               ])
-              ([CSDFEdge 'a' 'a' 1 [2,1] [1,2]
+              ([CSDFEdge "a" "a" 1 [2,1] [1,2]
               ])
 
 
 
 bgraph = Graph (M.fromList
-              [hsdfNode 'a' 1
-              ,hsdfNode 'b' 1
-              ,hsdfNode 'c' 0
-              ,hsdfNode 'd' 0
-              ,hsdfNode 'e' 0
+              [hsdfNode "a" 1
+              ,hsdfNode "b" 1
+              ,hsdfNode "c" 0
+              ,hsdfNode "d" 0
+              ,hsdfNode "e" 0
               ])
-              ([SDFEdge 'a' 'b' 0 8 1
-              , SDFEdge 'b' 'c' 0 1 1
-              , SDFEdge 'b' 'e' 0 1 8
-              , SDFEdge 'c' 'b' 1 1 1
-              , SDFEdge 'c' 'd' 0 1 8
-              , SDFEdge 'd' 'a' 1 1 1
-              , SDFEdge 'e' 'c' 7 8 1
+              ([SDFEdge "a" "b" 0 8 1
+              , SDFEdge "b" "c" 0 1 1
+              , SDFEdge "b" "e" 0 1 8
+              , SDFEdge "c" "b" 1 1 1
+              , SDFEdge "c" "d" 0 1 8
+              , SDFEdge "d" "a" 1 1 1
+              , SDFEdge "e" "c" 7 8 1
               ])
 
 sgraph = Graph (M.fromList
