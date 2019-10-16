@@ -7,6 +7,7 @@ import qualified Data.Map as M
 import qualified Data.List as L
 
 import Data.Maybe
+import Debug.Trace
 -- ratioGCD :: Integral a => Ratio a -> Ratio a -> Ratio a
 -- ratioGCD x y = (gcd nx ny) % (lcm dx dy)
 --   where
@@ -16,28 +17,30 @@ import Data.Maybe
 --     dy = denominator y
 
 
-simulation graph = 1
+simulation graph nrOfTicks = L.mapAccumL updateNode (graph, simMap, simTable) updateNodeInput
   where
     ns = nodes graph
-    simMap = M.map (\_ -> (0,[])) ns
+    simMap = M.map (\_ -> 0) ns
+    simTable = []
     tick = foldl1 gcd $ concat $ map wcet $ M.elems ns -- smallest simulation tick
-    es = edges graph
-    -- nsCanFire = filter (\edge -> (consumption edge) <= (tokens edge)) es
+    updateNodeInput = [(n, t) | t <- [0,tick..(tick*nrOfTicks)], n <- M.elems ns]
+    
+    
 
 
--- canNodeFire :: (Graphs g, DFEdges e, Eq l) => l -> Int -> g n [e l] -> Bool
-canNodeFire graph label periodCount = and sufficientTokensOnEdge
+canNodeFireCount :: (Eq l, Graphs g, DFEdges e) => l -> g n [e l] -> Int -> Integer
+canNodeFireCount label graph periodCount = minimum edgeConstraints -- minimum determins how many times a node can fire
   where
     etn = edgesToNode label (edges graph)           -- edges to the current node
-    sufficientTokensOnEdge = map allowEdgeFire etn  -- Booleans if an edge is keeping a node from firing, not sufficient tokens
+    edgeConstraints = map allowEdgeFire etn  -- Integers representing how many times an actor can fire accorindg to every edge
 
-    allowEdgeFire edge = (consumption edge)!!consIndex <= tokens edge   -- check if there are enough tokens on the edge
+    allowEdgeFire edge = div (tokens edge) ((consumption edge)!!consIndex)  -- check if there are enough tokens on the edge, maybe actor can fire multiple times, hence the div
       where
         consIndex = mod periodCount (length $ consumption edge)         -- modulus the consumption length because every edge can have its own consumption list
 
 
--- updateGraphWithNodeStartFiring :: (Graphs g, Eq l) => l -> Int -> g n [DFEdge l] -> Graph n [DFEdge l]
-updateGraphWithNodeStartFiring graph (label, periodCount) = (Graph ns es')
+updateGraphWithNodeStartFiring :: (Graphs g, Eq l) => l -> g n [DFEdge l] -> Int -> Graph n [DFEdge l]
+updateGraphWithNodeStartFiring label graph periodCount = (Graph ns es')
   where
     es = edges graph
     ns = nodes graph
@@ -53,7 +56,7 @@ updateGraphWithNodeStartFiring graph (label, periodCount) = (Graph ns es')
         nr = (consumption edge)!!consIndex                      -- the number of tokens that have to be consumed
 
 
--- updateGraphWithNodeEndFiring :: (Graphs g, Eq l) => l -> Int -> g n [DFEdge l] -> Graph n [DFEdge l]
+updateGraphWithNodeEndFiring :: (Graphs g, Eq a) => g n [DFEdge a] -> (a, Int) -> Graph n [DFEdge a]
 updateGraphWithNodeEndFiring graph (label, periodCount) = (Graph ns es')
   where
     es = edges graph
@@ -70,99 +73,57 @@ updateGraphWithNodeEndFiring graph (label, periodCount) = (Graph ns es')
         nr = (production edge)!!prodIndex                      -- the number of tokens that have to be consumed
 
 
+-- simMap contains the node label and period count
+-- simTable is a list of all active firings in a 4 tupple as: (label, periodCount, startTime, remainingExecutionTime)
 
-updateGraphAndSimTable graph simTable = (graph', simTable')
+updateNode :: (DFNodes n1, Show n2) 
+  => (Graph n2 [DFEdge [Char]], M.Map [Char] Int, [([Char], Int, Integer, Integer)])
+  -> (n1 [Char], Integer)
+  -> ((Graph n2 [DFEdge [Char]], M.Map [Char] Int, [([Char], Int, Integer, Integer)]), [([Char], Int, Integer, Integer)])
+updateNode (graph, simMap, simTable) (node, tick)
+  = {- trace t $ -} case iCanNodeFireCount > 0 of                   -- has a node fired, one or more times?
+      False -> ((graph' , simMap , simTable' ), [])   -- no, only provide update graph and simTable (because node firings could have ended), no starting Nodes
+      True  -> ((graph'', simMap', simTable''), st)   -- yes, provide the updated version of everything
   where
-    (endingFirings, remainingFirings) = L.partition (\(lbl, pc, remFireTicks) -> remFireTicks > 0) simTable -- split the simtable
-    graph' = foldl updateGraphWithNodeEndFiring graph (map (\(lbl, pc,_) -> (lbl,pc)) endingFirings) -- update graph with all the ending nodes
-    simTable' = map (\(lbl, pc, remFireTicks) -> (lbl, pc, remFireTicks - 1)) remainingFirings -- update the remaining nodes in the simTable
+    t =    "\ntick: " ++ (show tick) 
+        ++ "\nnode: " ++ (label node)
+        ++ "\niCanNodeFireCount: " ++ (show iCanNodeFireCount)
+        ++ "\nendingFirings: " ++ (show endingFirings) 
+        ++ "\nremainingFirings: " ++ (show remainingFirings)
+        ++ "\ngraph    : " ++ (show graph)
+        ++ "\ngraph'   : " ++ (show graph')
+        ++ "\ngraph''  : " ++ (show graph'')
+        ++ "\n"
+
+    nLabel =   label node
+    -- First step is to see if there are any nodes instances that are will stop firing, so produce tokens.
+    (endingFirings, remainingFirings) = L.partition (\(lbl, pc, st, et) -> tick >= et) simTable -- split the simtable into instances that end their firing and instances that will continue to fire
+    graph' = foldl (updateGraphWithNodeEndFiring) graph $ map (\(lbl, pc, _, _) -> (lbl,pc)) endingFirings      -- update graph with all the ending nodes, meaning produce tokens on the outgoing edges
+    -- simTable' = map (\(lbl, pc, st, exTime) -> (lbl, pc, st, exTime - 1)) remainingFirings          -- update the remaining nodes in the simTable
+    simTable' = remainingFirings          -- update the remaining nodes in the simTable
 
 
--- simMap contains the current periodCount of every node
--- simTable is a list conting all the firing instances of every node
+    -- If the current node can fire, then we need to update the graph, simMap and simTable accordingly
+    Just (periodCount) = M.lookup nLabel simMap                    -- TODO: fix if node not in simMap
+    iCanNodeFireCount = canNodeFireCount nLabel graph' periodCount -- the number of times a node can fire
+    periodCount' = periodCount + fromIntegral iCanNodeFireCount    -- the next periodCount TODO: if HSDF or CSDF, not neccesary period is always 0
 
-updateNode label graph simMap
-  = case canNodeFire graph label periodCount of
-      True -> 1
-      False -> 0
+    pCounts = [periodCount..(periodCount' - 1)]                             -- create a list with the pcounts for all the fire instances that are possible 
+    graph'' = foldl (updateGraphWithNodeStartFiring nLabel) graph' pCounts  -- Fire (the amount of times is defined by the length of pCounts)
+
+
+    startTime = tick
+    st = map (addNodeFiringToSimTable node startTime) pCounts
+    simTable'' = simTable' ++ st -- add the new fire instances to the simTable TODO: check if there is no mismatch between exTime and remFireTicks-1
+
+    simMap' = M.insert nLabel periodCount' simMap
+
+
+addNodeFiringToSimTable :: DFNodes n => n l -> Integer -> Int -> (l, Int, Integer, Integer)
+addNodeFiringToSimTable node startTime pc = (label node, pc, startTime, endTime)
   where
-    Just periodCount = lookup label simMap -- TODO: fix if node not in simMap
-    bCanNodeFire = canNodeFire graph label periodCount
-    simMap' = case bCanNodeFire of
-                True -> M.insert        -- node can fire, so that will happen, and periodCount needs to be increased
-                False -> simMap         -- can not fire
-
-
-
-
-iDontKnowAFunctionName graph simTable = 1
-  where
-    ns = M.keys $ nodes graph -- ns are node labels
-    (graph', simTable') = updateGraphAndSimTable graph simTable
-
-
-
-
-
-
-
--- updateSimTableAndGraph graph simTable = (graph', simTable')
---    where
---     (endingFirings, remainingFirings) = span
-
--- -- doSomethingWithNode label graph simMap = simMap'
--- --   where
---     Just (periodCount, simTable) = M.lookup label simMap           -- lookup node in mmap, TODO: fix if missing
---     bCanNodeFire = canNodeFire label periodCount graph
---     activeFirings = length simTable
---     (periodCount', (simTable', graph')) = case (bCanNodeFire, activeFirings) of
---       (False, 0) -> (periodCount, (simTable, graph)) -- node can not fire, there are no active firings, everything remains unchanged
---       (False, x) -> (periodCount, updateSimTableAndGraph simTable graph) -- node can not fire, there are active firings of this node, update the simTable and graph accordingly
-
-
-
-
-
-checkAndFireNode label graph simMap
-  = case (and sufficientTokensOnEdge, last sim) of -- if the last of sim is not 0, then the node is firing
-      (False,0) -> (graph, simMapUN) -- node cannot fire, and not firing
-      (False,1) -> (graph, simMapUF) -- node cannot fire, but its the last tick
-      (False,x) -> (graph, simMapUF) -- node cannot fire, but firing
-      (True,0)  -> (Graph ns es', simMapFN) -- node can fire, and is not firing
-      (True,1)  -> (Graph ns es', simMapFF) -- node can fire, but it is the last tick
-      (True,x)  -> (Graph ns es', simMapFF) -- node can fire, but is firing TODO: what to do in this case?
-  where
-    es = edges graph
-    ns = nodes graph
-    Just node = M.lookup label ns                             -- lookup node in graph, TODO: fix if missing
-    Just (periodCount, sim) = M.lookup label simMap           -- lookup node in mmap, TODO: fix if missing
-
-    etn = edgesToNode label es                                -- edges to the current node
-    sufficientTokensOnEdge = map allowEdgeFire etn             -- Booleans if an edge is keeping a node from firing, not sufficient tokens
-    etn' = map updateEdge etn                                 -- Consume tokens from edges
-    es' = (es L.\\ etn) ++ etn'     -- update the edges by removing the edges to the current node and adding the new edges to the current node TODO:optimize
-
-    wcetIndex = mod periodCount (length $ wcet node) -- modulus the wcet length because every node can have its own wcet list
-    wcet' = (wcet node)!!wcetIndex
-
-    -- insert will overwrite the old value if it exists
-    simMapUN = M.insert label (periodCount, sim ++ [0]) simMap                -- cannot fire, not firing, so periodCount stays the same,
-    simMapUF = M.insert label (periodCount + 1, sim ++ [(last sim)-1]) simMap   -- cannot fire, but is firing, so update periodCount stays and extend sim
-    simMapFN = M.insert label (periodCount + 1, sim ++ [ wcet'])       simMap   -- can fire, not firing, so update periodCount, and extend sim with wcet
-    simMapFF = M.insert label (periodCount + 1, sim ++ [ wcet'])       simMap   -- can fire, but firing, TODO: do not know what to do yet
-
-    updateEdge edge = consumeTokens nr edge                             -- update the edge by consuming tokens, NOTE: there is no check, so tokens can be negative
-      where
-        consIndex = mod periodCount (length $ consumption edge)         -- modulus the consumption length because every edge can have its own consumption list
-        nr = (consumption edge)!!consIndex                              -- the number of tokens that have to be consumed
-
-    allowEdgeFire edge = (consumption edge)!!consIndex <= tokens edge   -- check if there are enough tokens on the edge
-      where
-        consIndex = mod periodCount (length $ consumption edge)         -- modulus the consumption length because every edge can have its own consumption list
-
-
-
-
--- nodesThatCanFire simMap graph = []
---   where
-
+    wcetIndex = if length (wcet node) <= 1
+                  then 0
+                  else mod pc (length $ wcet node) -- modulus the wcet length because every node can have its own wcet list 
+    exTime = (wcet node)!!wcetIndex
+    endTime = startTime + exTime
