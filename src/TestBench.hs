@@ -82,6 +82,15 @@ csdf = Graph (M.fromList                      -- modulus = 36
               , CSDFEdge "c" "b" 3 [2,1] [1,2]    -- weight = 4
               ])
 
+
+hsdf0 = Graph (M.fromList
+              [hsdfNode "a" 1
+              ,hsdfNode "b" 2
+              ])
+              ([HSDFEdge "a" "b" 0
+              , HSDFEdge "b" "a" 2
+              ])
+
 hsdf1 = Graph (M.fromList
               [hsdfNode "a" 1
               ,hsdfNode "b" 1
