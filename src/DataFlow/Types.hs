@@ -1,4 +1,4 @@
-module DataFlow.Types 
+module DataFlow.Types
 ( module Data.Ratio
 , module DataFlow.Types
 ) where
@@ -10,7 +10,7 @@ import Data.Ratio
 
 data DFEdge n = HSDFEdge n n Integer
               |  SDFEdge n n Integer  Integer   Integer
-              | CSDFEdge n n Integer [Integer] [Integer] 
+              | CSDFEdge n n Integer [Integer] [Integer]
                 deriving Eq
 
 
@@ -18,7 +18,7 @@ data DFEdge n = HSDFEdge n n Integer
 data DFNode l = HSDFNode l  Integer
               | CSDFNode l [Integer]
 
---type DFGraph = Graph (M.Map Label DFNode) ([DFEdge Label]) 
+--type DFGraph = Graph (M.Map Label DFNode) ([DFEdge Label])
 type DFGraph l = Graph (M.Map l (DFNode l)) [DFEdge l]
 
 
@@ -80,3 +80,13 @@ instance (Show l) => Show (DFNode l) where
   show n = show (label n) ++ show (wcet n)
 
 
+consumeTokens :: Integer -> DFEdge n -> DFEdge n
+consumeTokens nr (HSDFEdge s d t)         = HSDFEdge s d (t-nr)
+consumeTokens nr ( SDFEdge s d t pr  cr ) =  SDFEdge s d (t-nr) pr  cr
+consumeTokens nr (CSDFEdge s d t prv crv) = CSDFEdge s d (t-nr) prv crv
+
+
+produceTokens :: Integer -> DFEdge n -> DFEdge n
+produceTokens nr (HSDFEdge s d t)         = HSDFEdge s d (t+nr)
+produceTokens nr ( SDFEdge s d t pr  cr ) =  SDFEdge s d (t+nr) pr  cr
+produceTokens nr (CSDFEdge s d t prv crv) = CSDFEdge s d (t+nr) prv crv

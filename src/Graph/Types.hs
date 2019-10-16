@@ -1,4 +1,4 @@
-module Graph.Types 
+module Graph.Types
 ( module Data.Ratio
 , module Graph.Types
 ) where
@@ -48,13 +48,13 @@ instance Nodes Node where
 class Edges e where
   source :: e n -> n
   target :: e n -> n
-  
+
 instance Edges Edge where
-  source (Edge s _)                   = s 
+  source (Edge s _)                   = s
   source (WeightedEdge s _ _)         = s
   source (WeightedMarkedEdge s _ _ _) = s
   source (ParametricEdge s _ _ _)     = s
-  
+
   target (Edge _ t)                   = t
   target (WeightedEdge _ t _)         = t
   target (WeightedMarkedEdge _ t _ _) = t
@@ -90,11 +90,11 @@ instance WeightedMarkedEdges Edge where
 
 class (Edges e, WeightedEdges e, WeightedMarkedEdges e) => ParametricEdges e where
   pdistance :: e n -> ParametricDistance
-  
+
 instance ParametricEdges Edge where
   pdistance (ParametricEdge _ _ _ p) = p
   pdistance e = (mark e, weight e)
-  
+
 
 
 
@@ -104,7 +104,7 @@ instance (Show n) => Show (Edge n) where
   show (Edge s d) = (show s) ++ "-->" ++ (show d) ++ "\n"
   show (WeightedEdge s d w) = (show s) ++ "--(" ++ (show w) ++ ")-->" ++ (show d) ++ "\n"
   show (WeightedMarkedEdge s d w m)  = (show s) ++ "--" ++ (show (m,w)) ++ "-->" ++ (show d) ++ "\n"
-  show (ParametricEdge s d w' (m,w)) 
+  show (ParametricEdge s d w' (m,w))
     = (show s) ++ "--(" ++ sw' ++ ")(" ++ sw ++ ")-->" ++ (show d) ++ "\n"
       where
         sw  | denominator w  == 1 = show (numerator w ) ++ "-" ++ (show m) ++ "l" --"λ"
@@ -138,3 +138,11 @@ instance (Num a, Num b) => Num (a,b) where
    abs (a,b)       = (abs a, abs b)
    signum (a,b)    = (signum a, signum b)
 
+
+
+edgesFromNode :: (Eq l, Edges e) => l -> [e l] -> [e l]
+edgesFromNode n es = filter (\e -> (source e) == n) es
+
+
+edgesToNode :: (Eq l, Edges e) => l -> [e l] -> [e l]
+edgesToNode n es = filter (\e -> (target e) == n) es

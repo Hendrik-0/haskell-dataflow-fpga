@@ -13,6 +13,8 @@ import TestBench_MXV
 
 import SVGWriter
 
+import Simulation
+
 hsdfNode l ex = (l,HSDFNode l ex)
 csdfNode l ex = (l,CSDFNode l ex)
 
@@ -44,7 +46,7 @@ wgraph = Graph (M.fromList
               ])
 
 -- example graphs:
-sdfp  = Graph (M.fromList 
+sdfp  = Graph (M.fromList
               [ hsdfNode "I"   0
               , hsdfNode "mxv" 5
               , hsdfNode "Z"   0
@@ -55,7 +57,7 @@ sdfp  = Graph (M.fromList
               , SDFEdge "Z"   "I"   1 1  1
               ])
 
-sdff  = Graph (M.fromList 
+sdff  = Graph (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "*" 1
               , hsdfNode "f" 4
@@ -67,7 +69,7 @@ sdff  = Graph (M.fromList
               , SDFEdge "f" "Z" 0 1  3
               , SDFEdge "Z" "I" 1 1  1
               ])
-             
+
 csdf = Graph (M.fromList                      -- modulus = 36
               [ csdfNode "a" [2,3]         -- q = 4
               , csdfNode "b" [2,2]         -- q = 6
@@ -273,7 +275,7 @@ b0 = Graph (M.fromList
               , SDFEdge "cc" "Zc" 0 1 8
               , SDFEdge "Zc" "Ic" 1 1 1
 
-              , SDFEdge "Zc" "Ia" 1 1 1              
+              , SDFEdge "Zc" "Ia" 1 1 1
               ])
 
 b1 = Graph (M.fromList
@@ -295,7 +297,7 @@ b1 = Graph (M.fromList
               , SDFEdge "cc" "Zc" 0 1 8
               , SDFEdge "Zc" "Ic" 1 1 1
 
-              , SDFEdge "Zc" "Ia" 1 1 1              
+              , SDFEdge "Zc" "Ia" 1 1 1
               ])
 
 bb = Graph (M.fromList
@@ -340,7 +342,7 @@ bb = Graph (M.fromList
               , SDFEdge "cc" "Zc" 0 1 8
               , SDFEdge "Zc" "Ic" 1 1 1
 
-              , SDFEdge "Zc" "Ia" 1 1 1              
+              , SDFEdge "Zc" "Ia" 1 1 1
               ])
 
 b4 = Graph (M.fromList
