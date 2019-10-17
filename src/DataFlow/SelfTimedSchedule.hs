@@ -7,7 +7,6 @@ import qualified Data.Map as M
 import qualified Data.List as L
 
 import Data.Maybe
-import Debug.Trace
 
 -- ratioGCD :: Integral a => Ratio a -> Ratio a -> Ratio a
 -- ratioGCD x y = (gcd nx ny) % (lcm dx dy)
@@ -17,11 +16,15 @@ import Debug.Trace
 --     dx = denominator x
 --     dy = denominator y
 
-
-selfTimedSchedule :: (DFNodes n1)
-  => Graph (M.Map [Char] (n1 [Char])) [DFEdge [Char]]
-  -> Integer
-  -> ((Graph (M.Map [Char] (n1 [Char])) [DFEdge [Char]], M.Map [Char] Int, [([Char], Int, Integer, Integer)]), [[([Char], Int, Integer, Integer)]])
+selfTimedSchedule :: (Ord k, DFNodes n)
+  => Graph (M.Map k (n k)) [DFEdge k]
+  -> Integer -- simulation ticks
+  -> (  ( Graph (M.Map k (n k)) [DFEdge k]  -- new graph after simulation until the nr of ticks
+        , M.Map k Int                       -- M.map with all the periodCounts of the nodes,
+        , [(k, Int, Integer, Integer)]      -- current simTable at the last simulated tick,
+        )
+      , [[(k, Int, Integer, Integer)]]      -- total simTable containing (label, periodCount, startTime, endTime) for every tick
+      )
 selfTimedSchedule graph nrOfTicks = L.mapAccumL updateNode (graph, simMap, simTable) updateNodeInput
   where
     ns = nodes graph
