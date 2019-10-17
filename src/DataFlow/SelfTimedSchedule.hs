@@ -1,13 +1,14 @@
-module Simulation where
+module DataFlow.SelfTimedSchedule where
 
 import Graph
-import DataFlow
+import DataFlow.Types
 
 import qualified Data.Map as M
 import qualified Data.List as L
 
 import Data.Maybe
 import Debug.Trace
+
 -- ratioGCD :: Integral a => Ratio a -> Ratio a -> Ratio a
 -- ratioGCD x y = (gcd nx ny) % (lcm dx dy)
 --   where
@@ -17,18 +18,20 @@ import Debug.Trace
 --     dy = denominator y
 
 
-simulation graph nrOfTicks = L.mapAccumL updateNode (graph, simMap, simTable) updateNodeInput
+selfTimedSchedule :: (DFNodes n1)
+  => Graph (M.Map [Char] (n1 [Char])) [DFEdge [Char]]
+  -> Integer
+  -> ((Graph (M.Map [Char] (n1 [Char])) [DFEdge [Char]], M.Map [Char] Int, [([Char], Int, Integer, Integer)]), [[([Char], Int, Integer, Integer)]])
+selfTimedSchedule graph nrOfTicks = L.mapAccumL updateNode (graph, simMap, simTable) updateNodeInput
   where
     ns = nodes graph
-    simMap = M.map (\_ -> 0) ns
-    simTable = []
+    simMap = M.map (\_ -> 0) ns -- all periodCounts at the start are 0
+    simTable = []   -- simulation table is just an empty list
     tick = foldl1 gcd $ concat $ map wcet $ M.elems ns -- smallest simulation tick
-    updateNodeInput = [(n, t) | t <- [0,tick..(tick*nrOfTicks)], n <- M.elems ns]
-    
-    
+    updateNodeInput = [(n, t) | t <- [0,tick..(tick*nrOfTicks)], n <- M.elems ns] -- a list of tupples with node and tick : [("a", 0), ("b", 0), ("a", 1)..]
 
 
-canNodeFireCount :: (Eq l, Graphs g, DFEdges e) => l -> g n [e l] -> Int -> Integer
+canNodeFireCount :: (Graphs g, DFEdges e, Eq l) => l -> g ns [e l] -> Int -> Integer
 canNodeFireCount label graph periodCount = minimum edgeConstraints -- minimum determins how many times a node can fire
   where
     etn = edgesToNode label (edges graph)           -- edges to the current node
@@ -39,7 +42,7 @@ canNodeFireCount label graph periodCount = minimum edgeConstraints -- minimum de
         consIndex = mod periodCount (length $ consumption edge)         -- modulus the consumption length because every edge can have its own consumption list
 
 
-updateGraphWithNodeStartFiring :: (Graphs g, Eq l) => l -> g n [DFEdge l] -> Int -> Graph n [DFEdge l]
+updateGraphWithNodeStartFiring :: (Graphs g, Eq l) => l -> g ns [DFEdge l] -> Int -> Graph ns [DFEdge l]
 updateGraphWithNodeStartFiring label graph periodCount = (Graph ns es')
   where
     es = edges graph
@@ -56,7 +59,7 @@ updateGraphWithNodeStartFiring label graph periodCount = (Graph ns es')
         nr = (consumption edge)!!consIndex                      -- the number of tokens that have to be consumed
 
 
-updateGraphWithNodeEndFiring :: (Graphs g, Eq a) => g n [DFEdge a] -> (a, Int) -> Graph n [DFEdge a]
+updateGraphWithNodeEndFiring :: (Graphs g, Eq a) => g ns [DFEdge a] -> (a, Int) -> Graph ns [DFEdge a]
 updateGraphWithNodeEndFiring graph (label, periodCount) = (Graph ns es')
   where
     es = edges graph
@@ -75,32 +78,20 @@ updateGraphWithNodeEndFiring graph (label, periodCount) = (Graph ns es')
 
 -- simMap contains the node label and period count
 -- simTable is a list of all active firings in a 4 tupple as: (label, periodCount, startTime, remainingExecutionTime)
-
-updateNode :: (DFNodes n1, Show n2) 
-  => (Graph n2 [DFEdge [Char]], M.Map [Char] Int, [([Char], Int, Integer, Integer)])
-  -> (n1 [Char], Integer)
-  -> ((Graph n2 [DFEdge [Char]], M.Map [Char] Int, [([Char], Int, Integer, Integer)]), [([Char], Int, Integer, Integer)])
+updateNode :: (DFNodes n, Ord l)
+  => (Graph ns [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)])
+  -> (n l, Integer)
+  -> ((Graph ns [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)]), [(l, Int, Integer, Integer)])
 updateNode (graph, simMap, simTable) (node, tick)
   = {- trace t $ -} case iCanNodeFireCount > 0 of                   -- has a node fired, one or more times?
       False -> ((graph' , simMap , simTable' ), [])   -- no, only provide update graph and simTable (because node firings could have ended), no starting Nodes
       True  -> ((graph'', simMap', simTable''), st)   -- yes, provide the updated version of everything
   where
-    t =    "\ntick: " ++ (show tick) 
-        ++ "\nnode: " ++ (label node)
-        ++ "\niCanNodeFireCount: " ++ (show iCanNodeFireCount)
-        ++ "\nendingFirings: " ++ (show endingFirings) 
-        ++ "\nremainingFirings: " ++ (show remainingFirings)
-        ++ "\ngraph    : " ++ (show graph)
-        ++ "\ngraph'   : " ++ (show graph')
-        ++ "\ngraph''  : " ++ (show graph'')
-        ++ "\n"
-
     nLabel =   label node
     -- First step is to see if there are any nodes instances that are will stop firing, so produce tokens.
     (endingFirings, remainingFirings) = L.partition (\(lbl, pc, st, et) -> tick >= et) simTable -- split the simtable into instances that end their firing and instances that will continue to fire
     graph' = foldl (updateGraphWithNodeEndFiring) graph $ map (\(lbl, pc, _, _) -> (lbl,pc)) endingFirings      -- update graph with all the ending nodes, meaning produce tokens on the outgoing edges
-    -- simTable' = map (\(lbl, pc, st, exTime) -> (lbl, pc, st, exTime - 1)) remainingFirings          -- update the remaining nodes in the simTable
-    simTable' = remainingFirings          -- update the remaining nodes in the simTable
+    simTable' = remainingFirings          -- the new simulation table contain the remaing nodes
 
 
     -- If the current node can fire, then we need to update the graph, simMap and simTable accordingly
@@ -108,7 +99,7 @@ updateNode (graph, simMap, simTable) (node, tick)
     iCanNodeFireCount = canNodeFireCount nLabel graph' periodCount -- the number of times a node can fire
     periodCount' = periodCount + fromIntegral iCanNodeFireCount    -- the next periodCount TODO: if HSDF or CSDF, not neccesary period is always 0
 
-    pCounts = [periodCount..(periodCount' - 1)]                             -- create a list with the pcounts for all the fire instances that are possible 
+    pCounts = [periodCount..(periodCount' - 1)]                             -- create a list with the pcounts for all the fire instances that are possible
     graph'' = foldl (updateGraphWithNodeStartFiring nLabel) graph' pCounts  -- Fire (the amount of times is defined by the length of pCounts)
 
 
@@ -124,6 +115,6 @@ addNodeFiringToSimTable node startTime pc = (label node, pc, startTime, endTime)
   where
     wcetIndex = if length (wcet node) <= 1
                   then 0
-                  else mod pc (length $ wcet node) -- modulus the wcet length because every node can have its own wcet list 
+                  else mod pc (length $ wcet node) -- modulus the wcet length because every node can have its own wcet list
     exTime = (wcet node)!!wcetIndex
     endTime = startTime + exTime

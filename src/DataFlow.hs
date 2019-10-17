@@ -5,6 +5,7 @@ module DataFlow
 , module DataFlow.NormalizationVector
 , module DataFlow.MaxCycleRatio
 , module DataFlow.StrictlyPeriodicSchedule
+, module DataFlow.SelfTimedSchedule
 ) where
 
 import DataFlow.Types
@@ -13,6 +14,7 @@ import DataFlow.Modulus
 import DataFlow.NormalizationVector
 import DataFlow.MaxCycleRatio
 import DataFlow.StrictlyPeriodicSchedule
+import DataFlow.SelfTimedSchedule
 
 
 

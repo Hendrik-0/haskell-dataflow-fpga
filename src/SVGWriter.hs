@@ -5,6 +5,7 @@ import Graphics.Svg
 
 import Data.Text.Internal
 import qualified Data.Map as M
+import qualified Data.List as L
 import Data.String
 import Data.Ratio
 import Data.Maybe
@@ -13,11 +14,10 @@ import Hardware
 import DataFlow
 import Graph
 
+import Debug.Trace
+
 scalar :: RealFloat a => a
 scalar = 20
-leftMargin = 100
-topMargin = 50
-asOffset = 4 -- the space between the different actor schedules in the graph
 
 svg :: RealFloat a => a -> a -> Element -> Element
 svg w h content =
@@ -77,7 +77,7 @@ periodicRects x y (s,p) w h endX color
 -- "middle" : top middle
 -- "end": upper right corner
 txt :: (RealFloat a) => a -> a -> a -> Data.Text.Internal.Text -> String -> Element
-txt x y fontSize anchor text 
+txt x y fontSize anchor text
   = text_ [ X_ <<- toText (scalar * x)
           , Y_ <<- toText (scalar * y + fontSize)
           , Font_size_ <<- toText fontSize
@@ -111,7 +111,7 @@ line x1 y1 x2 y2 s c = line_ [X1_ <<- toText (scalar * x1)
 -- fontSize: size of text font
 -- t: String to print
 lineWithText :: RealFloat a => a -> a -> a -> a -> a -> Data.Text.Internal.Text -> a -> String -> Element
-lineWithText x1 y1 x2 y2 s c fontSize text = 
+lineWithText x1 y1 x2 y2 s c fontSize text =
   txt x1 y2 fontSize "middle" text
   <> line x1 y1 x2 y2 s c
 
@@ -155,32 +155,77 @@ vlines x y l s m p c = mconcat  [ line x' y1 x' y2 s c
                                 ]
 -}
 
--- actor arguments
+
+-- actorST arguments, ST because self timed actor
 -- tx: start x of text box
 -- y: y-coordinate
--- px: start x coordinate of the periodic printing blocks
+-- sx: start x coordinate of the scheduling printing blocks
+-- h: height of row
+-- endX: length of text+pattern
+-- text: actor label
+-- firings: list of tuples with (startTime, endTime) of every fire instance
+actorST :: (RealFloat a) => a -> a -> a -> a -> String -> [(a, a)] -> (Element, a)
+actorST tx y sx h text firings
+  = ( txt tx y (0.8*h*scalar) "start" text
+  <> mconcat [rect x y' w h "green" | (st,et, ai) <- coordinateList
+                                    , let x = sx + st -- start x of schedule + start time actor
+                                    , let y' = y + h * (fromIntegral ai) -- y of schedule + the number of parallel firings at that specific instance
+                                    , let w = et - st -- width = end time - start time actor
+                                    ]
+    , fromIntegral $ maximum activeInstances + 1) -- return the list of maximum parallel fire instances, the next node in the SVG schedule needs to go below that
+  where
+    coordinateList = zipWith (\(st, et) ai -> (st, et, ai)) firings activeInstances -- create a list with (startTime, endTime, number of active firings that tick)
+    activeInstances = map length $ zipWith occurences firings [0..] -- the number of active fire instances at every instance in the list
+    occurences (cst, cet) index = filter (\(st, et) -> cst >= st && cst < et) (take index firings) -- filter simultanious firings in the previous list of tuples
+
+
+actorST' :: (RealFloat a, Nodes n) => a -> a -> a -> [(String, b, Integer, Integer)] -> a -> n String -> (a, Element)
+actorST' tx sx h simTable y node = (y', element)
+  where
+    (element, maxAi) = actorST tx y sx h (label node) firings'
+    y' = y + maxAi * h
+    firings = filter (\(lbl, _, _,_) -> lbl == (label node)) simTable -- filter all firings from the current node
+    firings' = map (\(_,_,st,et) -> (fromIntegral st, fromIntegral et)) firings -- get only start and end times of every firing
+
+
+actorsST :: (Show k, Enum a, RealFloat a, DFNodes n) => a -> a -> a -> a -> [(String, b, Integer, Integer)] -> M.Map k (n String) -> Element
+actorsST x y h endX simTable ns
+  = columnLines sx y th endX 0 clStepSize
+  <> element
+  where
+    (lastY, elements) = L.mapAccumL (actorST' x sx h simTable) y (M.elems ns)
+    element = mconcat elements
+    th = lastY
+    clStepSize = fromIntegral $ maximum $ concat $ map wcet (M.elems ns) -- stepsize of columnlines is the maxium of all the wcets of all the nodes
+    sx = x + (fromIntegral $ maximum $ map (length . show) (M.keys ns)) -- start periods at x + maximum label length
+
+
+-- actorP arguments, P because periodic actor
+-- tx: start x of text box
+-- y: y-coordinate
+-- sx: start x coordinate of the scheduling printing blocks
 -- h: height of row
 -- text: actor label
 -- startTime: start time of actor
 -- period: period of actor
 -- exTime:  execution time (width of rectangle)
 -- endX: length of text+pattern
-actor :: (RealFloat a, Enum a) => a -> a -> a -> a -> a -> String -> (a,a) -> a -> Element
-actor tx y px h endX text (startTime,period) exTime
-  =  txt tx y (0.8*h*scalar) "start" text 
-  <> periodicRects px y (startTime,period) exTime h endX "green"
+actorP :: (RealFloat a, Enum a) => a -> a -> a -> a -> a -> String -> (a,a) -> a -> Element
+actorP tx y sx h endX text (startTime,period) exTime
+  =  txt tx y (0.8*h*scalar) "start" text
+  <> periodicRects sx y (startTime,period) exTime h endX "green"
 
 
--- actors arguments  
+-- actorsP arguments, P because periodic actors
 -- x: x-coordinate of left upper corner of schedule
 -- y: y-coordinate of left upper corner of schedule
 -- h: hight of schedule blocks
--- m: length of schedule pattern
+-- endX: length of schedule pattern
 -- mmap: strict periodic schedule as M.Map with node label as key, and (start time, period, execution time) for each node as element
-actors :: (Show l, RealFloat a, Enum a) => a -> a -> a -> a -> M.Map l (Ratio Integer, Ratio Integer, Integer) -> Element
-actors x y h endX mmap 
-  = columnLines px y th endX 0 tp'
-  <> mconcat [actor x y' px h endX (show l) (st,p') ex'
+actorsP :: (Show l, RealFloat a, Enum a) => a -> a -> a -> a -> M.Map l (Ratio Integer, Ratio Integer, Integer) -> Element
+actorsP x y h endX mmap
+  = columnLines sx y th endX 0 tp'
+  <> mconcat [actorP x y' sx h endX (show l) (st,p') ex'
   | ((l,(s,p,ex)),y') <- zip (M.toList mmap) [y,(y+h)..]
   , let p'  = ((fromInteger $ numerator p) / (fromInteger $ denominator p))
   , let s'  = ((fromInteger $ numerator s) / (fromInteger $ denominator s))
@@ -188,21 +233,17 @@ actors x y h endX mmap
   , let ex' = if ex == 0 then 1 else (fromInteger ex) -- if execution time is 0, print a small line (1)
   ]
   where
-    px = x + (fromIntegral $ maximum $ map (length . show) (M.keys mmap)) -- start periods at x + maximum label length
-    th = h * (fromIntegral $ M.size mmap + 1) -- size +1 so some extra space beneath 
+    sx = x + (fromIntegral $ maximum $ map (length . show) (M.keys mmap)) -- start periods at x + maximum label length
+    th = h * (fromIntegral $ M.size mmap + 1) -- size +1 so some extra space beneath
     tp = maximum $ map (\(_,p,_) -> p) $ M.elems mmap -- max period of all actors
     tp' = (fromInteger $ numerator tp) / (fromIntegral $ denominator tp) -- from Ratio to Rational
 
---svgSchedule Nothing     = writeFile "../schedules/svg.svg" (show $ svg $ clocklines 50 100)
---svgSchedule (Just mmap) = writeFile "../schedules/svg.svg" (show $ svg $ (clocklines 50 1200) <> (actors 60 60  1200 mmap))
-svgSchedule :: (Show l, DFEdges e, Ord l, DFNodes n, Eq (e l)) 
+
+svgPeriodicSchedule :: (Show l, DFEdges e, Ord l, DFNodes n, Eq (e l))
   => Graph (M.Map l (n l)) [e l] -> IO ()
-svgSchedule graph
+svgPeriodicSchedule graph
   | isNothing mmap' = writeFile path (show $ svg canvasWidth canvasHeight $ txt startX startY 40 "start" "No schedule")
-  | otherwise = writeFile path (show $ svg canvasWidth canvasHeight $ 
-    mconcat [actors startX startY height endX mmap
-            -- , columnLines cStartX cStartY cHeight cEndX scale startCount stepSize
-            ])
+  | otherwise = writeFile path (show $ svg canvasWidth canvasHeight $ actorsP startX startY height endX mmap)
   where
     -- Important: everything is scaled by the scaler defined in this file
     canvasHeight = 600
@@ -217,10 +258,46 @@ svgSchedule graph
 
     path = "../schedules/svg.svg"
 
+
+
+
+svgSelfTimedSchedule graph ticks
+  | isNothing mcr = writeFile path (show $ svg canvasWidth canvasHeight $ txt startX startY 40 "start" "Deadlock")
+  | otherwise = writeFile path (show $ svg canvasWidth canvasHeight $ actorsST startX startY height endX simTable ns)
+  where
+    -- Important: everything is scaled by the scaler defined in this file
+    canvasHeight = 600
+    canvasWidth = 1920
+    height = 2 -- height of each row
+    startX = 4
+    startY = 4
+    endX = canvasWidth
+
+    (mcr, _) = maxCycleRatio $ singleRateApx graph
+    simTable = concat $ snd $ selfTimedSchedule graph ticks
+    ns = nodes graph
+
+    path = "../schedules/svg.svg"
+
+{-
+svgPrintEx = writeFile path (show $ svg m l $
+  actorST startX startY (startX + 3) height endX "a" [(0,1), (0,1), (3,4), (3,4), (6,7), (6,7), (6,7), (7,9), (9,10), (9,10)])
+  where
+    startX = 4
+    startY = 4
+    height = 2
+    endX = m
+
+    fontSize = 15
+
+    m = 1920
+    l = 600
+    path = "../schedules/svg.svg"
+-}
 {-
 svgPrintEx (Just mmap) = writeFile path (show $ svg m l $
   mconcat [ --periodicRects startX startY (startTime, period) exTime height endX color
-          --columnLines startX startY height endX startCount stepSize 
+          --columnLines startX startY height endX startCount stepSize
           -- actor startX startY (startX + 10) height endX "a" (startTime, period) exTime
           actors startX startY height endX mmap
           -- , txt 10 5 15 "start" "Muh"
@@ -232,7 +309,7 @@ svgPrintEx (Just mmap) = writeFile path (show $ svg m l $
     endX = m
 
     startTime = 2
-    period = 10 
+    period = 10
     exTime = 5
 
     color = "green"

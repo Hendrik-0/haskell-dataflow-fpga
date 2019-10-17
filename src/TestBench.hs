@@ -13,8 +13,6 @@ import TestBench_MXV
 
 import SVGWriter
 
-import Simulation
-
 hsdfNode l ex = (l,HSDFNode l ex)
 csdfNode l ex = (l,CSDFNode l ex)
 
