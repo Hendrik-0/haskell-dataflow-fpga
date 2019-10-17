@@ -167,16 +167,21 @@ vlines x y l s m p c = mconcat  [ line x' y1 x' y2 s c
 actorST :: (RealFloat a) => a -> a -> a -> a -> String -> [(a, a)] -> (Element, a)
 actorST tx y sx h text firings
   = ( txt tx y (0.8*h*scalar) "start" text
-  <> mconcat [rect x y' w h "green" | (st,et, ai) <- coordinateList
-                                    , let x = sx + st -- start x of schedule + start time actor
-                                    , let y' = y + h * (fromIntegral ai) -- y of schedule + the number of parallel firings at that specific instance
-                                    , let w = et - st -- width = end time - start time actor
+  <> mconcat [rect x y' w h "green" | (st,et,laneNr) <- coordinateList        -- start time, end time, lane number from coordinate list
+                                    , let x = sx + st                         -- start x of schedule + start time actor
+                                    , let y' = y + h * (fromIntegral laneNr)  -- y of schedule + the number of parallel firings at that specific instance
+                                    , let w = et - st                         -- width = end time - start time actor
                                     ]
-    , fromIntegral $ maximum activeInstances + 1) -- return the list of maximum parallel fire instances, the next node in the SVG schedule needs to go below that
+    , fromInteger $ largestLaneNr + 1)
   where
-    coordinateList = zipWith (\(st, et) ai -> (st, et, ai)) firings activeInstances -- create a list with (startTime, endTime, number of active firings that tick)
-    activeInstances = map length $ zipWith occurences firings [0..] -- the number of active fire instances at every instance in the list
-    occurences (cst, cet) index = filter (\(st, et) -> cst >= st && cst < et) (take index firings) -- filter simultanious firings in the previous list of tuples
+    coordinateList = foldl findFirstAvailLaneNr [] firings
+    largestLaneNr = maximum $ map (\(_,_, ln) -> ln) coordinateList
+
+    findFirstAvailLaneNr simTable (cst, cet) = simTable ++ [(cst, cet, firstLaneNotTaken)]
+      where
+        activeFirings = filter (\(st, et, ln) -> cst >= st && cst < et) simTable  -- alread active firings
+        takenLanes = map (\(_,_, ln) -> ln) activeFirings                         -- numbers of the lanes that are already taken
+        firstLaneNotTaken = head ([0..] L.\\ takenLanes)                          -- remove the taken lanes from the list of all lanes
 
 
 actorST' :: (RealFloat a, Nodes n) => a -> a -> a -> [(String, b, Integer, Integer)] -> a -> n String -> (a, Element)
@@ -196,7 +201,8 @@ actorsST x y h endX simTable ns
     (lastY, elements) = L.mapAccumL (actorST' x sx h simTable) y (M.elems ns)
     element = mconcat elements
     th = lastY
-    clStepSize = fromIntegral $ maximum $ concat $ map wcet (M.elems ns) -- stepsize of columnlines is the maxium of all the wcets of all the nodes
+    -- clStepSize = fromIntegral $ maximum $ concat $ map wcet (M.elems ns) -- stepsize of columnlines is the maximum of all the wcets of all the nodes
+    clStepSize = fromIntegral $ minimum $ concat $ map wcet (M.elems ns) -- stepsize of columnlines is the minimum of all the wcets of all the nodes
     sx = x + (fromIntegral $ maximum $ map (length . show) (M.keys ns)) -- start periods at x + maximum label length
 
 
@@ -246,7 +252,7 @@ svgPeriodicSchedule graph
   | otherwise = writeFile path (show $ svg canvasWidth canvasHeight $ actorsP startX startY height endX mmap)
   where
     -- Important: everything is scaled by the scaler defined in this file
-    canvasHeight = 600
+    canvasHeight = 1000
     canvasWidth = 1920
     height = 2 -- height of each row
     startX = 4
@@ -266,7 +272,7 @@ svgSelfTimedSchedule graph ticks
   | otherwise = writeFile path (show $ svg canvasWidth canvasHeight $ actorsST startX startY height endX simTable ns)
   where
     -- Important: everything is scaled by the scaler defined in this file
-    canvasHeight = 600
+    canvasHeight = 1000
     canvasWidth = 1920
     height = 2 -- height of each row
     startX = 4
