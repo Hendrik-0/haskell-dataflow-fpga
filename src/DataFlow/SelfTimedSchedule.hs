@@ -8,30 +8,43 @@ import qualified Data.List as L
 
 import Data.Maybe
 
--- ratioGCD :: Integral a => Ratio a -> Ratio a -> Ratio a
--- ratioGCD x y = (gcd nx ny) % (lcm dx dy)
---   where
---     nx = numerator x
---     ny = numerator y
---     dx = denominator x
---     dy = denominator y
+-- import Debug.Trace
 
-selfTimedSchedule :: (Ord k, DFNodes n)
-  => Graph (M.Map k (n k)) [DFEdge k]
-  -> Integer -- simulation ticks
-  -> (  ( Graph (M.Map k (n k)) [DFEdge k]  -- new graph after simulation until the nr of ticks
-        , M.Map k Int                       -- M.map with all the periodCounts of the nodes,
-        , [(k, Int, Integer, Integer)]      -- current simTable at the last simulated tick,
-        )
-      , [[(k, Int, Integer, Integer)]]      -- total simTable containing (label, periodCount, startTime, endTime) for every tick
-      )
-selfTimedSchedule graph nrOfTicks = L.mapAccumL updateNode (graph, simMap, simTable) updateNodeInput
+
+selfTimedSchedule :: (Ord l, DFNodes n)
+  => Graph (M.Map l (n l)) [DFEdge l]
+  -> Integer
+  -> ((Graph (M.Map l (n l)) [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)]), [[(l, Int, Integer, Integer)]])
+selfTimedSchedule graph nrOfTicks 
+  = selfTimedSchedule' (graph, simMap, simTable) totalSimTable totalTicks tickStep tick
   where
     ns = nodes graph
     simMap = M.map (\_ -> 0) ns -- all periodCounts at the start are 0
-    simTable = []   -- simulation table is just an empty list
-    tick = foldl1 gcd $ concat $ map wcet $ M.elems ns -- smallest simulation tick
-    updateNodeInput = [(n, t) | t <- [0,tick..(tick*nrOfTicks)], n <- M.elems ns] -- a list of tupples with node and tick : [("a", 0), ("b", 0), ("a", 1)..]
+    simTable = []
+    totalSimTable = []
+    totalTicks = nrOfTicks
+    tickStep = foldl1 gcd $ map (max 1) $ concat $ map wcet $ M.elems ns -- smallest simulation tick
+    tick = 0
+
+
+-- A node can have an execution time of 0, therfore we need to simulate each tick of the simulation until nothing in the simMap changes anymore
+-- This is quite an in-efficient method, but it works, TODO: optimize
+selfTimedSchedule' :: (DFNodes n, Ord l) 
+  => (Graph (M.Map k (n l)) [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)])
+  -> [[(l, Int, Integer, Integer)]]
+  -> Integer
+  -> Integer
+  -> Integer
+  -> ((Graph (M.Map k (n l)) [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)]), [[(l, Int, Integer, Integer)]])
+selfTimedSchedule' (graph, simMap, simTable) totalSimTable totalTicks tickStep tick
+  | tick >= totalTicks = ((graph', simMap', simTable'), totalSimTable)
+  | simMap' == simMap = selfTimedSchedule' (graph', simMap', simTable') totalSimTable' totalTicks tickStep (tick + tickStep)
+  | otherwise         = selfTimedSchedule' (graph', simMap', simTable') totalSimTable' totalTicks tickStep tick
+  where
+    ns = nodes graph
+    ((graph', simMap', simTable'), tst) = L.mapAccumL updateNode (graph, simMap, simTable) updateNodeInput
+    totalSimTable' = L.union totalSimTable tst -- The  total simulation table keeps track of every node that fires, every firing is unique due to the periodCount in every firng tuple
+    updateNodeInput = [(n, tick) | n <- M.elems ns] 
 
 
 canNodeFireCount :: (Graphs g, DFEdges e, Eq l) => l -> g ns [e l] -> Int -> Integer
@@ -67,7 +80,7 @@ updateGraphWithNodeEndFiring graph (label, periodCount) = (Graph ns es')
   where
     es = edges graph
     ns = nodes graph
-    efn = edgesFromNode label es      -- edges from the current node
+    efn = edgesFromNode label es    -- edges from the current node
     efn' = map updateEdge efn       -- Produce tokens on edges
     es' = (es L.\\ efn) ++ efn'     -- update the edges by removing the edges from the current node and adding the new edges from the current node TODO:optimize
 
@@ -93,7 +106,7 @@ updateNode (graph, simMap, simTable) (node, tick)
     nLabel =   label node
     -- First step is to see if there are any nodes instances that are will stop firing, so produce tokens.
     (endingFirings, remainingFirings) = L.partition (\(lbl, pc, st, et) -> tick >= et) simTable -- split the simtable into instances that end their firing and instances that will continue to fire
-    graph' = foldl (updateGraphWithNodeEndFiring) graph $ map (\(lbl, pc, _, _) -> (lbl,pc)) endingFirings      -- update graph with all the ending nodes, meaning produce tokens on the outgoing edges
+    graph' = foldl (updateGraphWithNodeEndFiring) graph $ map (\(lbl, pc, _, _) -> (lbl,pc)) endingFirings -- update graph with all the ending nodes, meaning produce tokens on the outgoing edges
     simTable' = remainingFirings          -- the new simulation table contain the remaing nodes
 
 
@@ -111,6 +124,7 @@ updateNode (graph, simMap, simTable) (node, tick)
     simTable'' = simTable' ++ st -- add the new fire instances to the simTable TODO: check if there is no mismatch between exTime and remFireTicks-1
 
     simMap' = M.insert nLabel periodCount' simMap
+
 
 
 addNodeFiringToSimTable :: DFNodes n => n l -> Integer -> Int -> (l, Int, Integer, Integer)

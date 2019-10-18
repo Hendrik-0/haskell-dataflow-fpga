@@ -173,10 +173,11 @@ actorST :: (RealFloat a, Show l) => a -> a -> a -> a -> l -> [(a, a)] -> (a, Ele
 actorST tx y sx h text firings
   = ( fromInteger $ largestLaneNr                                             -- the amount of lanes needed for this actor
     , txt tx y (0.8*h*scalar) "start" (show text)
-  <> mconcat [rect x y' w h "green" | (st,et,laneNr) <- coordinateList        -- start time, end time, lane number from coordinate list
+  <> mconcat [rect x y' w' h "green" | (st,et,laneNr) <- coordinateList        -- start time, end time, lane number from coordinate list
                                     , let x = sx + st                         -- start x of schedule + start time actor
                                     , let y' = y + h * (fromIntegral laneNr)  -- y of schedule + the number of parallel firings at that specific instance
                                     , let w = et - st                         -- width = end time - start time actor
+                                    , let w' = if w == 0 then 1/scalar else w -- if execution time is 0, print small line
                                     ]
     )
   where
@@ -283,7 +284,8 @@ svgSelfTimedSchedule graph
   | isNothing mcr = writeFile path (show $ svg canvasWidth canvasHeight $ txt startX startY 40 "start" "Deadlock")
   | otherwise = writeFile path (show $ svg canvasWidth canvasHeight
     $ txt tx ty fontSize "start" "Self Timed Schedule"
-    <> actorsST startX startY height endX simTable ns clStepSize)
+    <> actorsST startX startY height endX simTable ns clStepSize
+    )
   where
     -- Important: everything is scaled by the scaler defined in this file
     canvasHeight = 1000
@@ -302,7 +304,7 @@ svgSelfTimedSchedule graph
     ticks = div (fromIntegral $ round canvasWidth) (fromIntegral $ round scalar) -- number of ticks to be sufficient to fill the entire canvassize
     simTableST = concat $ snd $ selfTimedSchedule graph ticks                     -- simTable comming from selfTimedSchedule function
     simTable = map (\(lbl, _, stI, etI) -> (lbl, fromInteger stI, fromInteger etI)) simTableST -- remove periodCount, change Integers to RealFrac
-    clStepSize = fromIntegral $ minimum $ concat $ map wcet (M.elems ns)
+    clStepSize = max 1 $ fromIntegral $ maximum $ concat $ map wcet (M.elems ns)
 
     ns = nodes graph
 
@@ -345,7 +347,7 @@ svgSchedules graph
     ticks = div (fromIntegral $ round canvasWidth) (fromIntegral $ round scalar) -- number of ticks to be sufficient to fill the entire canvassize
     simTableST = concat $ snd $ selfTimedSchedule graph ticks                     -- simTable comming from selfTimedSchedule function
     simTableSfs = map (\(lbl, _, stI, etI) -> (lbl, fromInteger stI, fromInteger etI)) simTableST -- remove periodCount, change Integers to RealFrac
-    clStepSizeSfs = fromIntegral $ minimum $ concat $ map wcet (M.elems ns)
+    clStepSizeSfs = max 1 $ fromIntegral $ minimum $ concat $ map wcet (M.elems ns) -- must be larger than 1
 
 
 
