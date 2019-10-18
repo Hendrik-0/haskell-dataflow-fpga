@@ -324,7 +324,7 @@ svgSchedules graph
   where
     -- Important: everything is scaled by the scaler defined in this file
     path = "../schedules/svg.svg"
-    canvasHeight = 1000
+    canvasHeight = 2000
     canvasWidth = 1920
     fontSize = 0.8 * scalar*2
     height = 2 -- height of each row
