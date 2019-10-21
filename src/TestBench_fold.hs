@@ -163,3 +163,14 @@ fg3  = Graph (M.fromList
               , SDFEdge "Zh" "Z " 0 1 1
               , SDFEdge "Z " "S " 1 1 1
               ])
+
+
+g1  = Graph (M.fromList
+              [ hsdfNode "a" 2
+              , hsdfNode "b" 1
+              , hsdfNode "c" 3
+              ])
+              ([SDFEdge "a" "b" 0 4 1
+              , SDFEdge "b" "c" 0 1 1
+              , SDFEdge "c" "a" 4 1 4
+              ])
