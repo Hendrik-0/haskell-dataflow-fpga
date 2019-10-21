@@ -15,7 +15,7 @@ selfTimedSchedule :: (Ord l, DFNodes n)
   => Graph (M.Map l (n l)) [DFEdge l]
   -> Integer
   -> ((Graph (M.Map l (n l)) [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)]), [[(l, Int, Integer, Integer)]])
-selfTimedSchedule graph nrOfTicks 
+selfTimedSchedule graph nrOfTicks
   = selfTimedSchedule' (graph, simMap, simTable) totalSimTable totalTicks tickStep tick
   where
     ns = nodes graph
@@ -29,7 +29,7 @@ selfTimedSchedule graph nrOfTicks
 
 -- A node can have an execution time of 0, therfore we need to simulate each tick of the simulation until nothing in the simMap changes anymore
 -- This is quite an in-efficient method, but it works, TODO: optimize
-selfTimedSchedule' :: (DFNodes n, Ord l) 
+selfTimedSchedule' :: (DFNodes n, Ord l)
   => (Graph (M.Map k (n l)) [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)])
   -> [[(l, Int, Integer, Integer)]]
   -> Integer
@@ -44,7 +44,7 @@ selfTimedSchedule' (graph, simMap, simTable) totalSimTable totalTicks tickStep t
     ns = nodes graph
     ((graph', simMap', simTable'), tst) = L.mapAccumL updateNode (graph, simMap, simTable) updateNodeInput
     totalSimTable' = L.union totalSimTable tst -- The  total simulation table keeps track of every node that fires, every firing is unique due to the periodCount in every firng tuple
-    updateNodeInput = [(n, tick) | n <- M.elems ns] 
+    updateNodeInput = [(n, tick) | n <- M.elems ns]
 
 
 canNodeFireCount :: (Graphs g, DFEdges e, Eq l) => l -> g ns [e l] -> Int -> Integer
@@ -99,7 +99,7 @@ updateNode :: (DFNodes n, Ord l)
   -> (n l, Integer)
   -> ((Graph ns [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)]), [(l, Int, Integer, Integer)])
 updateNode (graph, simMap, simTable) (node, tick)
-  = {- trace t $ -} case iCanNodeFireCount > 0 of                   -- has a node fired, one or more times?
+  = case iCanNodeFireCount > 0 of                    -- has a node fired, one or more times?
       False -> ((graph' , simMap , simTable' ), [])   -- no, only provide update graph and simTable (because node firings could have ended), no starting Nodes
       True  -> ((graph'', simMap', simTable''), st)   -- yes, provide the updated version of everything
   where
