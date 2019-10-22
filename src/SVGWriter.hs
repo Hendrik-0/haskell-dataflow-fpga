@@ -328,21 +328,27 @@ drawSPS graph = writeFile path (show $ svg canvasWidth canvasHeight spsElem)
     (lastY, spsElem) = svgStrictlyPeriodicSchedule startX startY rowHeight endX graph
 
 
+scheduleElems :: (Enum a, RealFloat a, DFNodes n, Show l, Ord l)
+  => a -> a -> a -> a -> Graph (M.Map l (n l)) [DFEdge l] -> (a, Element)
+scheduleElems startX rowHeight endX startY graph = (lastY, spsElem <> stElem)
+  where
+    (lastYSPS, spsElem) = svgStrictlyPeriodicSchedule startX startY rowHeight endX graph
+    (lastY   , stElem ) = svgSelfTimedSchedule startX lastYSPS rowHeight endX graph
+
+
 drawSchedules :: (DFNodes n, Show l, Ord l)
-  => Graph (M.Map l (n l)) [DFEdge l] -> IO ()
-drawSchedules graph = writeFile path (show $ svg canvasWidth canvasHeight elem)
+  => [Graph (M.Map l (n l)) [DFEdge l]] -> IO ()
+drawSchedules graphs = writeFile path (show $ svg canvasWidth canvasHeight elem)
   where
     canvasWidth = 1920
-    canvasHeight = lastYST*scalar
+    canvasHeight = lastY*scalar
     endX = canvasWidth
     startX = 4
-    startYSPS = 4
-    startYST = lastYSPS + rowHeight
+    startY = 4
     rowHeight = 2
     path = "../schedules/svg.svg"
-    (lastYSPS, spsElem) = svgStrictlyPeriodicSchedule startX startYSPS rowHeight endX graph
-    (lastYST , stElem) = svgSelfTimedSchedule startX startYST rowHeight endX graph
-    elem = spsElem <> stElem
+    (lastY, elems) = L.mapAccumL (scheduleElems startX rowHeight endX) startY graphs
+    elem = mconcat elems
 
 
 {- Below is the previous code for printing an SVG schedule of strictly periodic graphs, but the schedule is never printed in different lanes, meaning that firings will overlap if multiple firings are happening in parrallel
