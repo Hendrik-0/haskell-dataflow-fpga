@@ -4,7 +4,9 @@ import qualified Data.Map as M
 
 import Graph
 import DataFlow
+import SVGWriter
 
+hsdfNode l ex = (l,HSDFNode l ex)
 
 mxv0 = Graph (M.fromList
             [("I",   HSDFNode "I"   0)
@@ -13,8 +15,8 @@ mxv0 = Graph (M.fromList
             ])
             ([SDFEdge "I"   "mxv" 0 12 12
             , SDFEdge "I"   "mxv" 0 12 12
-            , SDFEdge "mxv" "Z"   0 3  3 
-            , SDFEdge "Z"   "I"   1 1  1 
+            , SDFEdge "mxv" "Z"   0 3  3
+            , SDFEdge "Z"   "I"   1 1  1
             ])
 
 mxv1 = Graph (M.fromList
@@ -28,8 +30,8 @@ mxv1 = Graph (M.fromList
             , SDFEdge "I"      "dotp0" 0 4 4
             , SDFEdge "I"      "dotp1" 0 4 4
             , SDFEdge "I"      "dotp1" 0 4 4
-            , SDFEdge "I"      "dotp2" 0 4 4 
-            , SDFEdge "I"      "dotp2" 0 4 4 
+            , SDFEdge "I"      "dotp2" 0 4 4
+            , SDFEdge "I"      "dotp2" 0 4 4
             , SDFEdge "dotp0"  "Z"     0 1 1
             , SDFEdge "dotp1"  "Z"     0 1 1
             , SDFEdge "dotp2"  "Z"     0 1 1
@@ -249,8 +251,8 @@ mxv_d_0 = Graph (M.fromList
             ])
             ([SDFEdge "I"    "dotp" 0 12 4
             , SDFEdge "I"    "dotp" 0 12 4
-            , SDFEdge "dotp" "Z"    0 1  3 
-            , SDFEdge "Z"    "I"    1 1  1 
+            , SDFEdge "dotp" "Z"    0 1  3
+            , SDFEdge "Z"    "I"    1 1  1
             ])
 
 mxv_d_1a = Graph (M.fromList
@@ -270,14 +272,14 @@ mxv_d_1a = Graph (M.fromList
             , SDFEdge "I"  "*2" 0 3 1
             , SDFEdge "I"  "*3" 0 3 1
             , SDFEdge "I"  "*3" 0 3 1
-   
+
             , SDFEdge "*0" "f"  0 1 1
             , SDFEdge "*1" "f"  0 1 1
             , SDFEdge "*2" "f"  0 1 1
             , SDFEdge "*3" "f"  0 1 1
 
             , SDFEdge "f"  "Z"  0 1 3
-            , SDFEdge "Z"  "I"  1 1 1 
+            , SDFEdge "Z"  "I"  1 1 1
             ])
 
 mxv_d_1b = Graph (M.fromList
@@ -291,7 +293,7 @@ mxv_d_1b = Graph (M.fromList
             ])
             ([SDFEdge "I"  "*"  0 12 4
             , SDFEdge "I"  "*"  0 12 4
-   
+
             , SDFEdge "*"  "+0" 0 1 1
             , SDFEdge "*"  "+1" 0 1 1
             , SDFEdge "*"  "+2" 0 1 1
@@ -302,7 +304,7 @@ mxv_d_1b = Graph (M.fromList
             , SDFEdge "+2" "+3" 0 1 1
             , SDFEdge "+3" "Z"  0 1 3
 
-            , SDFEdge "Z"  "I"  1 1 1 
+            , SDFEdge "Z"  "I"  1 1 1
             ])
 
 mxv_d_2 = Graph (M.fromList
@@ -325,7 +327,7 @@ mxv_d_2 = Graph (M.fromList
             , SDFEdge "I"  "*2" 0 3 1
             , SDFEdge "I"  "*3" 0 3 1
             , SDFEdge "I"  "*3" 0 3 1
-   
+
             , SDFEdge "*0" "+0" 0 1 1
             , SDFEdge "*1" "+1" 0 1 1
             , SDFEdge "*2" "+2" 0 1 1
@@ -336,7 +338,7 @@ mxv_d_2 = Graph (M.fromList
             , SDFEdge "+2" "+3" 0 1 1
             , SDFEdge "+3" "Z"  0 1 3
 
-            , SDFEdge "Z"  "I"  1 1 1 
+            , SDFEdge "Z"  "I"  1 1 1
             ])
 
 mxv_dm_0 = Graph (M.fromList
@@ -347,12 +349,165 @@ mxv_dm_0 = Graph (M.fromList
             ])
             ([SDFEdge "I" "*" 0 12 1
             , SDFEdge "I" "*" 0 12 1
-   
+
             , SDFEdge "*" "f" 0 1 4
 
             , SDFEdge "f" "Z" 0 1 3
 
-            , SDFEdge "Z" "I" 1 1 1 
+            , SDFEdge "Z" "I" 1 1 1
             ])
 
+-----------------------------------------------------------------------------------------
+-- steps of mxv
+-----------------------------------------------------------------------------------------
 
+sg1 = Graph (M.fromList
+            [ hsdfNode "I  "  0
+            , hsdfNode "*11"  1
+            , hsdfNode "*12"  1
+            , hsdfNode "*13"  1
+            , hsdfNode "*14"  1
+            , hsdfNode "+11"  1
+            , hsdfNode "+12"  1
+            , hsdfNode "+13"  1
+            , hsdfNode "+14"  1
+
+            , hsdfNode "*21"  1
+            , hsdfNode "*22"  1
+            , hsdfNode "*23"  1
+            , hsdfNode "*24"  1
+            , hsdfNode "+21"  1
+            , hsdfNode "+22"  1
+            , hsdfNode "+23"  1
+            , hsdfNode "+24"  1
+
+            , hsdfNode "*31"  1
+            , hsdfNode "*32"  1
+            , hsdfNode "*33"  1
+            , hsdfNode "*34"  1
+            , hsdfNode "+31"  1
+            , hsdfNode "+32"  1
+            , hsdfNode "+33"  1
+            , hsdfNode "+34"  1
+            , hsdfNode "Z  "  0
+            ])
+            [ SDFEdge "I  " "*11" 0 1 1
+            , SDFEdge "I  " "*12" 0 1 1
+            , SDFEdge "I  " "*13" 0 1 1
+            , SDFEdge "I  " "*14" 0 1 1
+            , SDFEdge "*11" "+11" 0 1 1
+            , SDFEdge "*12" "+12" 0 1 1
+            , SDFEdge "*13" "+13" 0 1 1
+            , SDFEdge "*14" "+14" 0 1 1
+            , SDFEdge "+11" "+12" 0 1 1
+            , SDFEdge "+12" "+13" 0 1 1
+            , SDFEdge "+13" "+14" 0 1 1
+            , SDFEdge "+14" "Z  " 0 1 1
+
+            , SDFEdge "I  " "*21" 0 1 1
+            , SDFEdge "I  " "*22" 0 1 1
+            , SDFEdge "I  " "*23" 0 1 1
+            , SDFEdge "I  " "*24" 0 1 1
+            , SDFEdge "*21" "+21" 0 1 1
+            , SDFEdge "*22" "+22" 0 1 1
+            , SDFEdge "*23" "+23" 0 1 1
+            , SDFEdge "*24" "+24" 0 1 1
+            , SDFEdge "+21" "+22" 0 1 1
+            , SDFEdge "+22" "+23" 0 1 1
+            , SDFEdge "+23" "+24" 0 1 1
+            , SDFEdge "+24" "Z  " 0 1 1
+
+            , SDFEdge "I  " "*31" 0 1 1
+            , SDFEdge "I  " "*32" 0 1 1
+            , SDFEdge "I  " "*33" 0 1 1
+            , SDFEdge "I  " "*34" 0 1 1
+            , SDFEdge "*31" "+31" 0 1 1
+            , SDFEdge "*32" "+32" 0 1 1
+            , SDFEdge "*33" "+33" 0 1 1
+            , SDFEdge "*34" "+34" 0 1 1
+            , SDFEdge "+31" "+32" 0 1 1
+            , SDFEdge "+32" "+33" 0 1 1
+            , SDFEdge "+33" "+34" 0 1 1
+            , SDFEdge "+34" "Z  " 0 1 1
+
+            , SDFEdge "Z  " "I  " 1 1 1
+            ]
+
+sg1' = Graph (M.fromList
+            [ hsdfNode "I"      0
+            , hsdfNode "dotp1"  5
+            , hsdfNode "dotp2"  5
+            , hsdfNode "dotp3"  5
+            , hsdfNode "Z"      0
+            ])
+            [ SDFEdge "I" "dotp1" 0 1 1
+            , SDFEdge "I" "dotp2" 0 1 1
+            , SDFEdge "I" "dotp3" 0 1 1
+            , SDFEdge "dotp1" "Z" 0 1 1
+            , SDFEdge "dotp2" "Z" 0 1 1
+            , SDFEdge "dotp3" "Z" 0 1 1
+            , SDFEdge "Z" "I"     1 1 1
+            ]
+
+
+
+sg2 = Graph (M.fromList
+            [ hsdfNode "I " 0
+            , hsdfNode "*1" 1
+            , hsdfNode "*2" 1
+            , hsdfNode "*3" 1
+            , hsdfNode "*4" 1
+            , hsdfNode "+1" 1
+            , hsdfNode "+2" 1
+            , hsdfNode "+3" 1
+            , hsdfNode "+4" 1
+            , hsdfNode "Z " 0
+            ])
+            [ SDFEdge "I " "*1" 0 3 1
+            , SDFEdge "I " "*2" 0 3 1
+            , SDFEdge "I " "*3" 0 3 1
+            , SDFEdge "I " "*4" 0 3 1
+            , SDFEdge "*1" "+1" 0 1 1
+            , SDFEdge "*2" "+2" 0 1 1
+            , SDFEdge "*3" "+3" 0 1 1
+            , SDFEdge "*4" "+4" 0 1 1
+            , SDFEdge "+1" "+2" 0 1 1
+            , SDFEdge "+2" "+3" 0 1 1
+            , SDFEdge "+3" "+4" 0 1 1
+            , SDFEdge "+4" "Z " 0 1 3
+            , SDFEdge "Z " "I " 1 1 1
+            ]
+
+
+
+sg2' = Graph (M.fromList
+            [ hsdfNode "I " 0
+            , hsdfNode "If" 0
+            , hsdfNode "*1" 1
+            , hsdfNode "*2" 1
+            , hsdfNode "*3" 1
+            , hsdfNode "*4" 1
+            , hsdfNode "+1" 1
+            , hsdfNode "+2" 1
+            , hsdfNode "+3" 1
+            , hsdfNode "+4" 1
+            , hsdfNode "Zf" 0
+            , hsdfNode "Z " 0
+            ])
+            [ SDFEdge "I " "If" 0 3 1
+            , SDFEdge "If" "*1" 0 1 1
+            , SDFEdge "If" "*2" 0 1 1
+            , SDFEdge "If" "*3" 0 1 1
+            , SDFEdge "If" "*4" 0 1 1
+            , SDFEdge "*1" "+1" 0 1 1
+            , SDFEdge "*2" "+2" 0 1 1
+            , SDFEdge "*3" "+3" 0 1 1
+            , SDFEdge "*4" "+4" 0 1 1
+            , SDFEdge "+1" "+2" 0 1 1
+            , SDFEdge "+2" "+3" 0 1 1
+            , SDFEdge "+3" "+4" 0 1 1
+            , SDFEdge "+4" "Zf" 0 1 1
+            , SDFEdge "Zf" "If" 1 1 1
+            , SDFEdge "Zf" "Z " 0 1 3
+            , SDFEdge "Z " "I " 1 1 1
+            ]
