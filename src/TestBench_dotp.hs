@@ -172,7 +172,7 @@ dotpG2 = Graph  (M.fromList
               , hsdfNode "f4" 1
               ])
               ([SDFEdge "I " "Im" 0 1 1
-              
+
               , SDFEdge "Im" "m1" 0 1 1
               , SDFEdge "Im" "m2" 0 1 1
               , SDFEdge "Im" "m3" 0 1 1
@@ -197,7 +197,7 @@ dotpG2 = Graph  (M.fromList
               , SDFEdge "Zf" "Z " 0 1 1
 
               , SDFEdge "Z " "I " 1 1 1
-              ])              
+              ])
 
 
 dotpGm1 = Graph  (M.fromList
@@ -217,7 +217,8 @@ dotpGm1 = Graph  (M.fromList
               , SDFEdge "m3" "Zm" 0 1 1
               , SDFEdge "m4" "Zm" 0 1 1
               , SDFEdge "Zm" "Im" 1 1 1
-              ])              
+              ])
+
 
 dotpGf1 = Graph  (M.fromList
               [ hsdfNode "If" 0
@@ -236,11 +237,55 @@ dotpGf1 = Graph  (M.fromList
               , SDFEdge "f3" "f4" 0 1 1
               , SDFEdge "f4" "Zf" 0 1 1
               , SDFEdge "Zf" "If" 1 1 1
-              ])   
+              ])
+
+
+dotpGm_f1 = Graph  (M.fromList
+              [ hsdfNode "I" 0
+              , hsdfNode "Z" 0
+              , hsdfNode "m" 1
+              , hsdfNode "f" 4
+              ])
+              ([SDFEdge "I" "m" 0 4 4
+              , SDFEdge "m" "f" 0 4 4
+              , SDFEdge "f" "Z" 0 1 1
+              , SDFEdge "Z" "I" 1 1 1
+              ])
+
+
+dotpGm_f1' = Graph  (M.fromList
+              [ hsdfNode "I" 0
+              , hsdfNode "Z" 0
+              , hsdfNode "m" 1
+              , hsdfNode "f" 4
+              ])
+              ([SDFEdge "I" "m" 0 1 1
+              , SDFEdge "m" "f" 0 1 1
+              , SDFEdge "f" "Z" 0 1 1
+              , SDFEdge "Z" "I" 1 1 1
+              ])
 
 
 
+dotpGmf1 = Graph  (M.fromList
+              [ hsdfNode "I " 0
+              , hsdfNode "Z " 0
+              , hsdfNode "mf" 5
+              ])
+              ([SDFEdge "I " "mf" 0 4 4
+              , SDFEdge "mf" "Z " 0 1 1
+              , SDFEdge "Z " "I " 1 1 1
+              ])
 
+dotpGmf1' = Graph  (M.fromList
+              [ hsdfNode "I " 0
+              , hsdfNode "Z " 0
+              , hsdfNode "mf" 5
+              ])
+              ([SDFEdge "I " "mf" 0 1 1
+              , SDFEdge "mf" "Z " 0 1 1
+              , SDFEdge "Z " "I " 1 1 1
+              ])
 
 
 
