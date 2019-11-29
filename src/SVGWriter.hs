@@ -256,7 +256,7 @@ spsMmapToSimTable mmap endX = simTable
 -- graph: the graph
 svgStrictlyPeriodicSchedule :: (DFEdges e, DFNodes n, Enum a, RealFloat a, Show l, Ord l, Eq (e l))
   => a -> a -> a -> a -> Graph (M.Map l (n l)) [e l] -> (a, Element)
-svgStrictlyPeriodicSchedule x y rowHeight endX graph
+svgStrictlyPeriodicSchedule x rowHeight endX y graph
   | isNothing mmap' = (fontSize, txt x y fontSize "start" "No Strictly Periodic Schedule")
   | otherwise =       (lastY,    txt x y fontSize "start" "Strictly Periodic Schedule"
                                  <> scheduleElement
@@ -281,7 +281,7 @@ svgStrictlyPeriodicSchedule x y rowHeight endX graph
 -- graph: the graph
 svgSelfTimedSchedule :: (Enum a, RealFloat a, DFNodes n, Show l, Ord l)
   => a -> a -> a -> a -> Graph (M.Map l (n l)) [DFEdge l] -> (a, Element)
-svgSelfTimedSchedule x y rowHeight endX graph
+svgSelfTimedSchedule x rowHeight endX y graph
   | isNothing mcr = (fontSize, txt x y fontSize "start" "Deadlock")
   | otherwise =     (lastY,    txt x y fontSize "start" "Self Timed Schedule"
                                <> scheduleElement
@@ -301,8 +301,8 @@ svgSelfTimedSchedule x y rowHeight endX graph
 
 
 drawST :: (DFNodes n, Show l, Ord l)
-  => Graph (M.Map l (n l)) [DFEdge l] -> IO ()
-drawST graph = writeFile path (show $ svg canvasWidth canvasHeight stElem)
+  => [Graph (M.Map l (n l)) [DFEdge l]] -> IO ()
+drawST graphs = writeFile path (show $ svg canvasWidth canvasHeight stElem)
   where
     canvasWidth = 1920
     canvasHeight = lastY*scalar
@@ -311,12 +311,13 @@ drawST graph = writeFile path (show $ svg canvasWidth canvasHeight stElem)
     startY = 4
     rowHeight = 2
     path = "../schedules/svg.svg"
-    (lastY, stElem) = svgSelfTimedSchedule startX startY rowHeight endX graph
-
+    -- (lastY, stElem) = svgSelfTimedSchedule startX rowHeight endX startY graph
+    (lastY, stElems) = L.mapAccumL (svgSelfTimedSchedule startX rowHeight endX) startY graphs
+    stElem = mconcat stElems
 
 drawSPS :: (DFEdges e, DFNodes n, Show l, Ord l, Eq (e l))
-  => Graph (M.Map l (n l)) [e l] -> IO ()
-drawSPS graph = writeFile path (show $ svg canvasWidth canvasHeight spsElem)
+  => [Graph (M.Map l (n l)) [e l]] -> IO ()
+drawSPS graphs = writeFile path (show $ svg canvasWidth canvasHeight spsElem)
   where
     canvasWidth = 1920
     canvasHeight = lastY*scalar
@@ -325,15 +326,16 @@ drawSPS graph = writeFile path (show $ svg canvasWidth canvasHeight spsElem)
     startY = 4
     rowHeight = 2
     path = "../schedules/svg.svg"
-    (lastY, spsElem) = svgStrictlyPeriodicSchedule startX startY rowHeight endX graph
-
+    -- (lastY, spsElem) = svgStrictlyPeriodicSchedule startX rowHeight endX startY graph
+    (lastY, spsElems) = L.mapAccumL (svgStrictlyPeriodicSchedule startX rowHeight endX) startY graphs
+    spsElem = mconcat spsElems
 
 scheduleElems :: (Enum a, RealFloat a, DFNodes n, Show l, Ord l)
   => a -> a -> a -> a -> Graph (M.Map l (n l)) [DFEdge l] -> (a, Element)
 scheduleElems startX rowHeight endX startY graph = (lastY, spsElem <> stElem)
   where
-    (lastYSPS, spsElem) = svgStrictlyPeriodicSchedule startX startY rowHeight endX graph
-    (lastY   , stElem ) = svgSelfTimedSchedule startX lastYSPS rowHeight endX graph
+    (lastYSPS, spsElem) = svgStrictlyPeriodicSchedule startX rowHeight endX startY graph
+    (lastY   , stElem ) = svgSelfTimedSchedule startX rowHeight endX lastYSPS graph
 
 
 drawSchedules :: (DFNodes n, Show l, Ord l)
