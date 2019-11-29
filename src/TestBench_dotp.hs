@@ -155,7 +155,7 @@ dotp = Graph  (M.fromList
               ])
 
 
-dotp' = Graph  (M.fromList
+dotp_ms_fs = Graph  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -240,58 +240,6 @@ dotp_fs = Graph  (M.fromList
               ])
 
 
-dotp_m_f = Graph  (M.fromList
-              [ hsdfNode "I" 0
-              , hsdfNode "Z" 0
-              , hsdfNode "m" 1
-              , hsdfNode "f" 4
-              ])
-              ([SDFEdge "I" "m" 0 4 4
-              , SDFEdge "m" "f" 0 4 4
-              , SDFEdge "f" "Z" 0 1 1
-              , SDFEdge "Z" "I" 1 1 1
-              ])
-
-
-dotp_m_f' = Graph  (M.fromList
-              [ hsdfNode "I" 0
-              , hsdfNode "Z" 0
-              , hsdfNode "m" 1
-              , hsdfNode "f" 4
-              ])
-              ([SDFEdge "I" "m" 0 1 1
-              , SDFEdge "m" "f" 0 1 1
-              , SDFEdge "f" "Z" 0 1 1
-              , SDFEdge "Z" "I" 1 1 1
-              ])
-
-
-
-dotp_mf = Graph  (M.fromList
-              [ hsdfNode "I " 0
-              , hsdfNode "Z " 0
-              , hsdfNode "mf" 5
-              ])
-              ([SDFEdge "I " "mf" 0 4 4
-              , SDFEdge "mf" "Z " 0 1 1
-              , SDFEdge "Z " "I " 1 1 1
-              ])
-
-dotp_mf' = Graph  (M.fromList
-              [ hsdfNode "I " 0
-              , hsdfNode "Z " 0
-              , hsdfNode "mf" 5
-              ])
-              ([SDFEdge "I " "mf" 0 1 1
-              , SDFEdge "mf" "Z " 0 1 1
-              , SDFEdge "Z " "I " 1 1 1
-              ])
-
-
------------------------------------------------------------------------------------------
--- dotp function folded starting with "hieracrhy"
------------------------------------------------------------------------------------------
-
 dotp_ms_f = Graph  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
@@ -355,6 +303,118 @@ dotp_ms_f' = Graph  (M.fromList
               , SDFEdge "Z " "I " 1 1 1
               ])
 
+
+dotp_m_fs = Graph  (M.fromList
+              [ hsdfNode "I " 0
+              , hsdfNode "Z " 0
+              , hsdfNode "If" 0
+              , hsdfNode "Zf" 0
+              , hsdfNode "m " 1
+              , hsdfNode "f1" 1
+              , hsdfNode "f2" 1
+              , hsdfNode "f3" 1
+              , hsdfNode "f4" 1
+              ])
+              ([SDFEdge "I " "m " 0 4 4
+
+              , SDFEdge "m " "If" 0 4 4
+
+              , SDFEdge "If" "f1" 0 1 1
+              , SDFEdge "If" "f2" 0 1 1
+              , SDFEdge "If" "f3" 0 1 1
+              , SDFEdge "If" "f4" 0 1 1
+              , SDFEdge "f1" "f2" 0 1 1
+              , SDFEdge "f2" "f3" 0 1 1
+              , SDFEdge "f3" "f4" 0 1 1
+              , SDFEdge "f4" "Zf" 0 1 1
+              , SDFEdge "Zf" "If" 1 1 1
+              , SDFEdge "Zf" "Z " 0 1 1
+
+              , SDFEdge "Z " "I " 1 1 1
+              ])
+
+
+dotp_m_fs' = Graph  (M.fromList
+              [ hsdfNode "I " 0
+              , hsdfNode "Z " 0
+              , hsdfNode "If" 0
+              , hsdfNode "Zf" 0
+              , hsdfNode "m " 1
+              , hsdfNode "f1" 1
+              , hsdfNode "f2" 1
+              , hsdfNode "f3" 1
+              , hsdfNode "f4" 1
+              ])
+              ([SDFEdge "I " "m " 0 1 1
+
+              , SDFEdge "m " "If" 0 1 1
+
+              , SDFEdge "If" "f1" 0 1 1
+              , SDFEdge "If" "f2" 0 1 1
+              , SDFEdge "If" "f3" 0 1 1
+              , SDFEdge "If" "f4" 0 1 1
+              , SDFEdge "f1" "f2" 0 1 1
+              , SDFEdge "f2" "f3" 0 1 1
+              , SDFEdge "f3" "f4" 0 1 1
+              , SDFEdge "f4" "Zf" 0 1 1
+              , SDFEdge "Zf" "If" 1 1 1
+              , SDFEdge "Zf" "Z " 0 1 1
+
+              , SDFEdge "Z " "I " 1 1 1
+              ])
+
+
+dotp_m_f = Graph  (M.fromList
+              [ hsdfNode "I" 0
+              , hsdfNode "Z" 0
+              , hsdfNode "m" 1
+              , hsdfNode "f" 4
+              ])
+              ([SDFEdge "I" "m" 0 4 4
+              , SDFEdge "m" "f" 0 4 4
+              , SDFEdge "f" "Z" 0 1 1
+              , SDFEdge "Z" "I" 1 1 1
+              ])
+
+
+dotp_m_f' = Graph  (M.fromList
+              [ hsdfNode "I" 0
+              , hsdfNode "Z" 0
+              , hsdfNode "m" 1
+              , hsdfNode "f" 4
+              ])
+              ([SDFEdge "I" "m" 0 1 1
+              , SDFEdge "m" "f" 0 1 1
+              , SDFEdge "f" "Z" 0 1 1
+              , SDFEdge "Z" "I" 1 1 1
+              ])
+
+
+
+dotp_mf = Graph  (M.fromList
+              [ hsdfNode "I " 0
+              , hsdfNode "Z " 0
+              , hsdfNode "mf" 5
+              ])
+              ([SDFEdge "I " "mf" 0 4 4
+              , SDFEdge "mf" "Z " 0 1 1
+              , SDFEdge "Z " "I " 1 1 1
+              ])
+
+dotp_mf' = Graph  (M.fromList
+              [ hsdfNode "I " 0
+              , hsdfNode "Z " 0
+              , hsdfNode "mf" 5
+              ])
+              ([SDFEdge "I " "mf" 0 1 1
+              , SDFEdge "mf" "Z " 0 1 1
+              , SDFEdge "Z " "I " 1 1 1
+              ])
+
+
+-----------------------------------------------------------------------------------------
+-- dotp function folded starting with "hieracrhy"
+-----------------------------------------------------------------------------------------
 
 dotp_mm_f = Graph  (M.fromList
               [ hsdfNode "I " 0
