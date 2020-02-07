@@ -34,11 +34,11 @@ strictlyPeriodicSchedule graph
         where
           s' = s + mcr*((m%qi) -1)
           p = mcr * (m%qi)
-      
+
 strictlyPeriodicScheduleWithExTime :: (DFEdges e, Ord l, DFNodes n, Eq (e l))
   => Graph (M.Map l (n l)) [e l]
   -> Maybe (M.Map l (Ratio Integer, Ratio Integer, Integer))
-strictlyPeriodicScheduleWithExTime graph 
+strictlyPeriodicScheduleWithExTime graph
   | isJust sps' = Just sps
   | otherwise   = Nothing
     where
@@ -54,8 +54,8 @@ singleRateApx
   :: (Eq (e l), Ord l, DFNodes n, DFEdges e)
   => Graph (M.Map l (n l)) [e l]                -- DataFlowGraph
   -> Graph (M.Map l (DFNode l)) [DFEdge l]      -- HSDFGraph
-singleRateApx graph@(Graph ns es)
-  = Graph ns' es'
+singleRateApx graph@(Graph name ns es)
+  = Graph name ns' es'
     where
       m     = modulus graph
       q     = repetitionVector graph
@@ -63,14 +63,14 @@ singleRateApx graph@(Graph ns es)
       ns'   = M.map upperbound ns
       es'   = map (approximateEdge s) es
 
-upperbound :: DFNodes n 
+upperbound :: DFNodes n
   => n l        -- DFNode
   -> DFNode l   -- HSDFNode
 upperbound node
   = HSDFNode (label node) (maximum (wcet node))
 
 
-approximateEdge :: (DFEdges e, Eq (e l)) 
+approximateEdge :: (DFEdges e, Eq (e l))
   => [(e l, Integer)] -- normalization vector
   -> e l              -- edge
   -> DFEdge l         -- hsdf approximation
@@ -93,32 +93,10 @@ approximateEdge s edge
 
 
 printSchedule :: Show l => Maybe (M.Map l (Ratio Integer, Ratio Integer)) -> IO ()
-printSchedule Nothing = putStr "N" 
+printSchedule Nothing = putStr "N"
 printSchedule (Just mmap) = putStr $ concat $ M.elems (M.mapWithKey p mmap) where
   p l (st,period) = "node: " ++ (show l) ++ ",   startTime: " ++ st' ++ ", \t period: " ++ period' ++ "\r\n" where
     st'     | denominator st == 1     = show (numerator st)
             | otherwise               = show st
     period' | denominator period == 1 = show (numerator period)
             | otherwise               = show period
-
---printSchedule Nothing = "N"
---printSchedule g@(Graph ns es)
---  = putStr $ concat $  M.elems mmap'
---    where
---      Just mmap = sps g
---      mmap' = M.mapWithKey prnt mmap
---      prnt l (startTime, period) = (show l) ++ line maxPeriod (numerator period) (numerator startTime) exTime
---        where
---          exTime = maximum (wcet n)
---          Just n = M.lookup l ns
---      line gp p st ex = zipWith f rs ls ++ "\r\n"
---        where
---          f x ys        = if x `elem` ys then '|' else '_'
---          rs            = [0..gp]
---          ls            = repeat (concat $ pp gp p st ex)
---          pp gp p st ex = [s | x <- [st..gp], (x-st) `mod` p == 0, let s = [x..(x+ex-1)]]
---          
---      maxPeriod = numerator $ M.foldl max' 0 mmap
---      max' r1 (_,r2) = max r1 r2
---
-

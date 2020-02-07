@@ -7,36 +7,14 @@ import qualified Data.Map as M
 import Data.Ratio
 
 
-type Weight = Ratio Integer
-type Mark = Integer
+type Weight           = Ratio Integer
+type Mark               = Integer
 type ParametricDistance = (Mark, Weight)
 
+------------------------
+-- Node
+------------------------
 data Node l = Node l
-
-data Edge n = Edge n n
-            | WeightedEdge n n Weight
-            | WeightedMarkedEdge n n Weight Mark
-            | ParametricEdge n n Weight ParametricDistance
-              deriving Eq
-
-data Graph n e = Graph n e
-
-
---type WeightedGraph = Graph (M.Map Label Node) ([Edge Label])
-
-
-class Graphs g where
-  nodes :: g n e -> n
-  edges :: g n e -> e
-
-instance Graphs Graph where
-  nodes (Graph n _) = n
-  edges (Graph _ e) = e
-
-
-
-
-
 
 class Nodes n where
   label :: n l -> l
@@ -44,6 +22,17 @@ class Nodes n where
 instance Nodes Node where
   label (Node n) = n
 
+instance (Show n) => Show (Node n) where
+  show (Node n) = show n
+
+------------------------
+-- Edge
+------------------------
+data Edge n = Edge               n n
+            | WeightedEdge       n n Weight
+            | WeightedMarkedEdge n n Weight Mark
+            | ParametricEdge     n n Weight      ParametricDistance
+              deriving Eq
 
 class Edges e where
   source :: e n -> n
@@ -60,8 +49,6 @@ instance Edges Edge where
   target (WeightedMarkedEdge _ t _ _) = t
   target (ParametricEdge _ t _ _)     = t
 
-
-
 class (Edges e) => WeightedEdges e where
    weight :: e n -> Weight
 
@@ -71,11 +58,6 @@ instance WeightedEdges Edge where
    weight (ParametricEdge _ _ w _)     = w
    weight _                            = 1 -- TODO ? default edge has weight 1
 
-
-
-
-
-
 class (Edges e, WeightedEdges e) => WeightedMarkedEdges e where
   mark :: e n -> Mark
 
@@ -84,10 +66,6 @@ instance WeightedMarkedEdges Edge where
   mark (ParametricEdge _ _ _ (m,w)) = m
   mark _                            = 0 -- TODO? marking 0 for Edge and WeightedEdge => no lambdas)
 
-
-
-
-
 class (Edges e, WeightedEdges e, WeightedMarkedEdges e) => ParametricEdges e where
   pdistance :: e n -> ParametricDistance
 
@@ -95,16 +73,11 @@ instance ParametricEdges Edge where
   pdistance (ParametricEdge _ _ _ p) = p
   pdistance e = (mark e, weight e)
 
-
-
-
-
 instance (Show n) => Show (Edge n) where
-  --show e = (show $ source e) ++ "-->" ++ (show $ target e)
-  show (Edge s d) = (show s) ++ "-->" ++ (show d) ++ "\n"
-  show (WeightedEdge s d w) = (show s) ++ "--(" ++ (show w) ++ ")-->" ++ (show d) ++ "\n"
-  show (WeightedMarkedEdge s d w m)  = (show s) ++ "--" ++ (show (m,w)) ++ "-->" ++ (show d) ++ "\n"
-  show (ParametricEdge s d w' (m,w))
+  show (Edge               s d    ) = (show s) ++ "-->" ++ (show d) ++ "\n"
+  show (WeightedEdge       s d w  ) = (show s) ++ "--(" ++ (show w) ++ ")-->" ++ (show d) ++ "\n"
+  show (WeightedMarkedEdge s d w m) = (show s) ++ "--" ++ (show (m,w)) ++ "-->" ++ (show d) ++ "\n"
+  show (ParametricEdge     s d w' (m,w))
     = (show s) ++ "--(" ++ sw' ++ ")(" ++ sw ++ ")-->" ++ (show d) ++ "\n"
       where
         sw  | denominator w  == 1 = show (numerator w ) ++ "-" ++ (show m) ++ "l" --"λ"
@@ -112,23 +85,28 @@ instance (Show n) => Show (Edge n) where
         sw' | denominator w' == 1 = show (numerator w')
             | otherwise           = show (          w')
 
-instance (Show n) => Show (Node n) where
-  show (Node n) = show n
+------------------------
+-- Graph
+------------------------
+data Graph n e = Graph String n e
 
+class Graphs g where
+  name  :: g n e -> String
+  nodes :: g n e -> n
+  edges :: g n e -> e
+
+instance Graphs Graph where
+  name  (Graph l _ _) = l
+  nodes (Graph _ n _) = n
+  edges (Graph _ _ e) = e
 
 instance (Show n, Show e) => Show (Graph n e) where
-  show (Graph ns es) = "Nodes: " ++ (show ns) ++ "| Edges: " ++ show es
+  show (Graph la ns es) = (show la) ++ " => Nodes: " ++ (show ns) ++ "| Edges: " ++ show es
 
 
-
-
-
-
-
---instance (Ord n) => Ord (Edge n) where
---  compare a b = compare (weight a) (weight b)
-
-
+------------------------
+-- Helper functions
+------------------------
 instance (Num a, Num b) => Num (a,b) where
    fromInteger a   = (fromInteger a, fromInteger a)
    (a,b) + (a',b') = (a + a', b + b')
@@ -137,8 +115,6 @@ instance (Num a, Num b) => Num (a,b) where
    negate (a,b)    = (negate a, negate b)
    abs (a,b)       = (abs a, abs b)
    signum (a,b)    = (signum a, signum b)
-
-
 
 edgesFromNode :: (Eq l, Edges e) => l -> [e l] -> [e l]
 edgesFromNode n es = filter (\e -> (source e) == n) es

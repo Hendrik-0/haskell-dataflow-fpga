@@ -29,7 +29,6 @@ maxCycleRatio g
       Left cycles         = pmapSpTree
       Right (pmap,spTree) = pmapSpTree
       candidates          = edges pgraph \\ spTree                              -- remove all the spanningTree edges from the candidate edges, so that they dont apear again the in spanningTree if they disapear.
-      --(ratio,cycle)       = maximum $ zip (map maxCycleRatioFromParametricCycle cycles) cycles        -- if initial tree already contains a cycle, this is the MCR
       (ratio,cycle)       = foldl1 max' $ zip (map maxCycleRatioFromParametricCycle cycles) cycles       -- if initial tree already contains a cycle, this is the MCR
       max' s@(r1,_) t@(r2,_) = if r1 > r2 then s else t
 
@@ -39,9 +38,9 @@ maxCycleRatioFromParametricCycle :: ParametricEdges e
 maxCycleRatioFromParametricCycle c
   | tokens == 0 = Nothing
   | otherwise   = Just $ w/ (tokens  % 1)
-    where 
+    where
       (tokens, w) = sum $ map pdistance c
-  
+
 maxCycleRatioR :: (Ord l, Eq (e l), ParametricEdges e)
   => l
   -> [e l]
@@ -63,7 +62,7 @@ maxCycleRatioR root candidates spTree
     spTree'              = pivot : filter (\e -> target e /= w) spTree        -- the new spanningTree is the old one, with the one edge replaced by the pivot edge
     orderTuples x y      = compare (fst x) (fst y)
     ancestorPath         = findPathInTreeEdgeList spTree w v
-   
+
 
 {-
 pivot (pmap, gTree) es = edgeKeys
@@ -73,12 +72,12 @@ pivot (pmap, gTree) es = edgeKeys
       edgeKeys = filter (\(_,w) -> isJust w) $ zip es $ map (edgeKey pmap) es
       (w',e) = maximum $ map swap $ map (fmap fromJust) edgeKeys -- Take maximum of lambda, TODO: check below the "current" lambda (or pick one?)
       isAn = isAncestor (edges gTree) (target e) (source e) -- check if, in the current graphTree, the destination node is an anchestor of the source node
--}    
+-}
 
 
-{- 
+{-
     isAncestor uses dfs to determine if the source node is an anchestor of the destination node
-    isAncestor edges a b = true if there is a path from b to a 
+    isAncestor edges a b = true if there is a path from b to a
     TODO: optimize, because dfs is a bit overkill....
 -}
 
@@ -91,8 +90,7 @@ isAncestor es s d = length l > 0 || s == d -- path to source, or selfedge
   where
     dfs = snd $ dfsHO es d -- all paths from destination
     l = filter (\e -> target e == s) dfs -- filter path to source
---    pathFromDfs (p:ps) =
-    
+
 
 
 {-
@@ -136,12 +134,12 @@ evalGraph :: ParametricEdges e
   => Weight
   -> Graph (M.Map l n) [e l]
   -> Graph (M.Map l n) [Edge l]
-evalGraph l (Graph ns es)
-  = Graph ns (evalEdges l es)
+evalGraph l (Graph name ns es)
+  = Graph name ns (evalEdges l es)
 
 {-
-    pmapAndSpanningTree provides Either 
-    a list of cycles 
+    pmapAndSpanningTree provides Either
+    a list of cycles
     or a M.Map containing the parametric distance and the path, to/for each node
 -}
 
@@ -168,8 +166,8 @@ pmapAndSpanningTree es root lambda
 df2parametricGraph :: (Ord l, DFNodes n, DFEdges e)
   => Graph (M.Map l (n l)) [e l]
   -> Graph (M.Map l (n l)) [Edge l]
-df2parametricGraph (Graph ns es)
-  = Graph ns es'
+df2parametricGraph (Graph name ns es)
+  = Graph name ns es'
     where
       es' = map edge2edge es
       edge2edge e = (ParametricEdge s t w (m,w))
