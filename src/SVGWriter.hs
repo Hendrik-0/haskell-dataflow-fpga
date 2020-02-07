@@ -175,12 +175,18 @@ actorST tx y sx h text firings
 -- simTable: simulation table, continging a list of tuples with (label, startTime, endTime)
 -- y: starting coordinate, if schedule spans over multiple lanes, the y' is the resulting y coordinate
 -- node: node to draw the schedule for
-actorST' :: (RealFloat a, Nodes n, Eq l, Show l) => a -> a -> a -> [(l, a, a)] -> a -> n l -> (a, Element)
+actorST' :: (RealFloat a, Eq l, Show l)
+  => a -> a -> a
+  -> [(l, a, a)]
+  -> a
+  -> DFNode l
+  -> (a, Element)
 actorST' tx sx h simTable y node = (y', element)
   where
-    (lastY, element) = actorST tx y sx h (label node) firings'
+    nlabel = label node
+    (lastY, element) = actorST tx y sx h nlabel firings'
     y' = lastY -- y + (maxAi+1) * h
-    firings = filter (\(lbl,_,_) -> lbl == (label node)) simTable   -- filter all firings from the current node
+    firings = filter (\(lbl,_,_) -> lbl == nlabel) simTable   -- filter all firings from the current node
     firings' = map (\(_,st,et) -> (st, et)) firings                 -- get only start and end times of every firing
 
 
@@ -192,15 +198,19 @@ actorST' tx sx h simTable y node = (y', element)
 -- simTable: the simulation table for which a schedule must be drawn, containing tuples with: (label, startTime, endTime) of every firing instance
 -- ns : nodes of the graph
 -- clStepSize: step size of the column lines.
-actorsST :: (Show k, Enum a, RealFloat a, DFNodes n, Eq l, Show l) => a -> a -> a -> a -> [(l, a, a)] -> M.Map k (n l) -> a -> (a, Element)
+actorsST :: (Enum a, RealFloat a, Eq l, Show l) => a -> a -> a -> a
+  -> [(l, a, a)]
+  -> [DFNode l]
+  -> a
+  -> (a, Element)
 actorsST x y h endX simTable ns clStepSize = (lastY, element)
   where
     (lastYColumnLines, columnElem) = columnLines sx y th endX 0 clStepSize
-    (lastYSchedule, actorElems) = L.mapAccumL (actorST' x sx h simTable) y (M.elems ns)
+    (lastYSchedule, actorElems) = L.mapAccumL (actorST' x sx h simTable) y ns
     element = mconcat (columnElem:actorElems)
     th = lastYSchedule + h - y
     lastY = lastYColumnLines
-    sx = x + (fromIntegral $ maximum $ map (length . show) (M.keys ns))     -- start periods at x + maximum label length
+    sx = x + (fromIntegral $ maximum $ map (length . show) (map label ns))     -- start periods at x + maximum label length
 
 
 -- converts a ratio to a Fractional
@@ -233,21 +243,18 @@ svgStrictlyPeriodicSchedule :: (Enum a, RealFloat a, Show l, Ord l)
   => a -> a -> a -> a
   -> Graph [DFNode l] [DFEdge l]
   -> (a, Element)
-svgStrictlyPeriodicSchedule x rowHeight endX y graph'
-  | isNothing mmap' = (fontSize, txt x y fontSize "start" (name graph' ++ " - No Strictly Periodic Schedule"))
-  | otherwise =       (lastY,    txt x y fontSize "start" (name graph' ++ " - Strictly Periodic Schedule")
+svgStrictlyPeriodicSchedule x rowHeight endX y graph
+  | isNothing mmap' = (fontSize, txt x y fontSize "start" (name graph ++ " - No Strictly Periodic Schedule"))
+  | otherwise =       (lastY,    txt x y fontSize "start" (name graph ++ " - Strictly Periodic Schedule")
                                  <> scheduleElement
                       )
   where
-    -- Map graph to mapped graph
-    graph = graphMap graph'
-
     (lastY, scheduleElement) = actorsST startX startY rowHeight endX simTable (nodes graph) clStepSize
     fontSize = 0.8 * scalar * rowHeight
     startX = x
     startY = y + rowHeight -- after text
 
-    mmap' = strictlyPeriodicScheduleWithExTime graph
+    mmap' = strictlyPeriodicScheduleWithExTime (graphMap graph)
     mmap = fromJust mmap'
     simTable = spsMmapToSimTable mmap (endX / scalar)      -- convert the mmap to simTable, we only need to schedule up to the width of the canvas
     clStepSize = maximum $ M.elems $ M.map (\(_,p,_) -> ratioToFrac p) mmap -- step size of the column lines is largest period (they are probably all the same)
@@ -272,7 +279,7 @@ svgSelfTimedSchedule x rowHeight endX y graph'
     -- Map graph to mapped graph
     graph = graphMap graph'
 
-    ns = nodes graph
+    ns = nodes graph'
     (lastY, scheduleElement) = actorsST startX startY rowHeight endX simTable ns clStepSize
     fontSize = 0.8 * scalar * rowHeight
     startX = x
@@ -282,7 +289,7 @@ svgSelfTimedSchedule x rowHeight endX y graph'
     ticks = div (fromIntegral $ round endX) (fromIntegral $ round scalar)  -- number of ticks to be sufficient to fill the entire canvassize
     simTableST = concat $ snd $ selfTimedSchedule graph ticks                     -- simTable comming from selfTimedSchedule function
     simTable = map (\(lbl, _, stI, etI) -> (lbl, fromInteger stI, fromInteger etI)) simTableST -- remove periodCount, change Integers to RealFrac
-    clStepSize = max 1 $ fromIntegral $ maximum $ concat $ map wcet (M.elems ns)
+    clStepSize = max 1 $ fromIntegral $ maximum $ concat $ map wcet ns
 
 
 drawST :: (Show l, Ord l)
