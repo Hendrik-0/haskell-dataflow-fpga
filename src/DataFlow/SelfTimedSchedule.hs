@@ -50,11 +50,12 @@ selfTimedSchedule' (graph, simMap, simTable) totalSimTable totalTicks tickStep t
 canNodeFireCount :: (Graphs g, DFEdges e, Eq l) => l -> g ns [e l] -> Int -> Integer
 canNodeFireCount label graph periodCount = minimum edgeConstraints -- minimum determins how many times a node can fire
   where
-    etn = edgesToNode label (edges graph)           -- edges to the current node
-    edgeConstraints = map allowEdgeFire etn  -- Integers representing how many times an actor can fire accorindg to every edge
-
-    allowEdgeFire edge = div (tokens edge) ((consumption edge)!!consIndex)  -- check if there are enough tokens on the edge, maybe actor can fire multiple times, hence the div
+    etn = edgesToNode label (edges graph)     -- edges to the current node
+    edgeConstraints = map allowEdgeFire etn   -- Integers representing how many times an actor can fire accorindg to every edge
+    allowEdgeFire edge | consRate /= 0 = div (tokens edge) consRate  -- check if there are enough tokens on the edge, maybe actor can fire multiple times, hence the div
+                       | otherwise = 1        -- if the consumption rate is 0, then the actor can fire at least 1 time (TODO: check cornercases)
       where
+        consRate = ((consumption edge)!!consIndex)
         consIndex = mod periodCount (length $ consumption edge)         -- modulus the consumption length because every edge can have its own consumption list
 
 
