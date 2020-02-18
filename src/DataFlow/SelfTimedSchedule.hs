@@ -52,11 +52,19 @@ canNodeFireCount label graph periodCount = minimum edgeConstraints -- minimum de
   where
     etn = edgesToNode label (edges graph)     -- edges to the current node
     edgeConstraints = map allowEdgeFire etn   -- Integers representing how many times an actor can fire accorindg to every edge
-    allowEdgeFire edge | consRate /= 0 = div (tokens edge) consRate  -- check if there are enough tokens on the edge, maybe actor can fire multiple times, hence the div
-                       | otherwise = 1        -- if the consumption rate is 0, then the actor can fire at least 1 time (TODO: check cornercases)
+    allowEdgeFire edge = nrOfPossibleFirings
+    -- allowEdgeFire edge | consRate /= 0 = div (tokens edge) consRate  -- check if there are enough tokens on the edge, maybe actor can fire multiple times, hence the div
+    --                    | otherwise = 1        -- if the consumption rate is 0, then the actor can fire at least 1 time (TODO: check cornercases)
       where
-        consRate = ((consumption edge)!!consIndex)
         consIndex = mod periodCount (length $ consumption edge)         -- modulus the consumption length because every edge can have its own consumption list
+        consRate = ((consumption edge)!!consIndex)
+        nrOfPossibleFirings | length (consumption edge) > 1 = -- CSDF graph
+                                                              if consRate <= (tokens edge) -- current instance enough tokens?
+                                                                then 1  -- TODO: what if CSDF actor can fire multiple times?
+                                                                else 0
+                            | otherwise   = div (tokens edge) consRate -- if the lenght of the consumption vector is 1, then it is not a CSDF edge (or a CSDF edge with 1 instace)
+                                                                       -- calculate number of firings depending on the number of tokens on that specific edge, maybe actor can fire multiple times, hence the div
+
 
 
 updateGraphWithNodeStartFiring :: (Graphs g, Eq l) => l -> g ns [DFEdge l] -> Int -> Graph ns [DFEdge l]
