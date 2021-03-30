@@ -8,7 +8,7 @@ import SVGWriter
 
 hsdfNode l ex = (l,HSDFNode l ex)
 
-mxv0 = Graph (M.fromList
+mxv0 = Graph "mxv0" (M.fromList
             [("I",   HSDFNode "I"   0)
             ,("mxv", HSDFNode "mxv" 5)
             ,("Z",   HSDFNode "Z"   0)
@@ -19,7 +19,7 @@ mxv0 = Graph (M.fromList
             , SDFEdge "Z"   "I"   1 1  1
             ])
 
-mxv1 = Graph (M.fromList
+mxv1 = Graph "mxv1" (M.fromList
             [("I",     HSDFNode "I"     0)
             ,("dotp0", HSDFNode "dotp0" 5)
             ,("dotp1", HSDFNode "dotp1" 5)
@@ -38,7 +38,7 @@ mxv1 = Graph (M.fromList
             , SDFEdge "Z"      "I"     1 1 1
             ])
 
-mxv2_a = Graph (M.fromList
+mxv2_a = Graph "mxv2_a" (M.fromList
             [("I",   HSDFNode "I"   0)
             ,("*00", HSDFNode "*00" 1)
             ,("*01", HSDFNode "*01" 1)
@@ -99,7 +99,7 @@ mxv2_a = Graph (M.fromList
             , SDFEdge "Z"   "I"   1 1 1
             ])
 
-mxv2_b = Graph (M.fromList
+mxv2_b = Graph "mxv2_b" (M.fromList
             [("I",   HSDFNode "I"   0)
             ,("*0", HSDFNode "*0" 1)
             ,("*1", HSDFNode "*1" 1)
@@ -157,7 +157,7 @@ mxv2_b = Graph (M.fromList
             ])
 
 
-mxv3 = Graph (M.fromList
+mxv3 = Graph "mxv3" (M.fromList
             [("I",   HSDFNode "I"   0)
             ,("*00", HSDFNode "*00" 1)
             ,("*01", HSDFNode "*01" 1)
@@ -244,7 +244,7 @@ mxv3 = Graph (M.fromList
 
 
 
-mxv_d_0 = Graph (M.fromList
+mxv_d_0 = Graph "mxv_d_0" (M.fromList
             [("I",    HSDFNode "I"    0)
             ,("dotp", HSDFNode "dotp" 5)
             ,("Z",    HSDFNode "Z"    0)
@@ -255,7 +255,7 @@ mxv_d_0 = Graph (M.fromList
             , SDFEdge "Z"    "I"    1 1  1
             ])
 
-mxv_d_1a = Graph (M.fromList
+mxv_d_1a = Graph "mxv_d_1a" (M.fromList
             [("I",  HSDFNode "I"  0)
             ,("*0", HSDFNode "*0" 1)
             ,("*1", HSDFNode "*1" 1)
@@ -282,7 +282,7 @@ mxv_d_1a = Graph (M.fromList
             , SDFEdge "Z"  "I"  1 1 1
             ])
 
-mxv_d_1b = Graph (M.fromList
+mxv_d_1b = Graph "mxv_d_1b" (M.fromList
             [("I",  HSDFNode "I"  0)
             ,("*",  HSDFNode "*"  1)
             ,("+0", HSDFNode "+0" 1)
@@ -307,7 +307,7 @@ mxv_d_1b = Graph (M.fromList
             , SDFEdge "Z"  "I"  1 1 1
             ])
 
-mxv_d_2 = Graph (M.fromList
+mxv_d_2 = Graph "mxv_d_2" (M.fromList
             [("I",  HSDFNode "I"  0)
             ,("*0", HSDFNode "*0" 1)
             ,("*1", HSDFNode "*1" 1)
@@ -341,7 +341,7 @@ mxv_d_2 = Graph (M.fromList
             , SDFEdge "Z"  "I"  1 1 1
             ])
 
-mxv_dm_0 = Graph (M.fromList
+mxv_dm_0 = Graph "mxv_dm_0" (M.fromList
             [("I",  HSDFNode "I"  0)
             ,("*",  HSDFNode "*"  1)
             ,("f",  HSDFNode "f"  4)
@@ -361,7 +361,7 @@ mxv_dm_0 = Graph (M.fromList
 -- steps of mxv
 -----------------------------------------------------------------------------------------
 
-sg1 = Graph (M.fromList
+sg1 = Graph "sg1" (M.fromList
             [ hsdfNode "I  "  0
             , hsdfNode "*11"  1
             , hsdfNode "*12"  1
@@ -433,7 +433,7 @@ sg1 = Graph (M.fromList
             , SDFEdge "Z  " "I  " 1 1 1
             ]
 
-sg1' = Graph (M.fromList
+sg1' = Graph "sg1'" (M.fromList
             [ hsdfNode "I"      0
             , hsdfNode "dotp1"  5
             , hsdfNode "dotp2"  5
@@ -451,7 +451,7 @@ sg1' = Graph (M.fromList
 
 
 
-sg2 = Graph (M.fromList
+sg2 = Graph "sg2" (M.fromList
             [ hsdfNode "I " 0
             , hsdfNode "*1" 1
             , hsdfNode "*2" 1
@@ -480,7 +480,7 @@ sg2 = Graph (M.fromList
 
 
 
-sg2' = Graph (M.fromList
+sg2' = Graph "sg2'" (M.fromList
             [ hsdfNode "I " 0
             , hsdfNode "If" 0
             , hsdfNode "*1" 1

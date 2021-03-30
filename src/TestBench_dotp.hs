@@ -9,7 +9,7 @@ import SVGWriter
 
 hsdfNode l ex = (l,HSDFNode l ex)
 
-g1  = Graph   (M.fromList
+g1  = Graph "g1"   (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "m" 1
@@ -23,7 +23,7 @@ g1  = Graph   (M.fromList
               , SDFEdge "Z" "I" 1 1 1
               ])
 
-g2  = Graph   (M.fromList
+g2  = Graph "g2"   (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "m" 1
@@ -39,7 +39,7 @@ g2  = Graph   (M.fromList
 -- map function
 -----------------------------------------------------------------------------------------
 
-mapG = Graph  (M.fromList
+mapG = Graph "mapG"  (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "1" 1
@@ -58,7 +58,7 @@ mapG = Graph  (M.fromList
               , SDFEdge "Z" "I" 1 1 1
               ])
 
-mapGf = Graph (M.fromList
+mapGf = Graph "mapGf" (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "m" 1
@@ -68,7 +68,7 @@ mapGf = Graph (M.fromList
               , SDFEdge "Z" "I" 1 1 1
               ])
 
-mapGc = Graph (M.fromList
+mapGc = Graph "mapGc" (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "m" 1
@@ -82,7 +82,7 @@ mapGc = Graph (M.fromList
 -- fold function
 -----------------------------------------------------------------------------------------
 
-foldG = Graph  (M.fromList
+foldG = Graph "foldG"  (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "1" 1
@@ -102,7 +102,7 @@ foldG = Graph  (M.fromList
               , SDFEdge "Z" "I" 1 1 1
               ])
 
-foldGf = Graph  (M.fromList
+foldGf = Graph "foldGf"  (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "f" 4
@@ -112,7 +112,7 @@ foldGf = Graph  (M.fromList
               , SDFEdge "Z" "I" 1 1 1
               ])
 
-foldGc = Graph  (M.fromList
+foldGc = Graph "foldGc"  (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "f" 1
@@ -126,7 +126,7 @@ foldGc = Graph  (M.fromList
 -- dotp function
 -----------------------------------------------------------------------------------------
 
-dotp = Graph  (M.fromList
+dotp = Graph "dotp"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "m1" 1
@@ -155,7 +155,7 @@ dotp = Graph  (M.fromList
               ])
 
 
-dotp_ms_fs = Graph  (M.fromList
+dotp_ms_fs = Graph "dotp_ms_fs"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -200,7 +200,7 @@ dotp_ms_fs = Graph  (M.fromList
               ])
 
 
-dotp_ms = Graph  (M.fromList
+dotp_ms = Graph "dotp_ms"  (M.fromList
               [ hsdfNode "Im" 0
               , hsdfNode "Zm" 0
               , hsdfNode "m1" 1
@@ -220,7 +220,7 @@ dotp_ms = Graph  (M.fromList
               ])
 
 
-dotp_fs = Graph  (M.fromList
+dotp_fs = Graph "dotp_fs"  (M.fromList
               [ hsdfNode "If" 0
               , hsdfNode "Zf" 0
               , hsdfNode "f1" 1
@@ -240,7 +240,7 @@ dotp_fs = Graph  (M.fromList
               ])
 
 
-dotp_ms_f = Graph  (M.fromList
+dotp_ms_f = Graph "dotp_ms_f"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -272,7 +272,7 @@ dotp_ms_f = Graph  (M.fromList
               ])
 
 
-dotp_ms_f' = Graph  (M.fromList
+dotp_ms_f' = Graph "dotp_ms_f"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -304,7 +304,7 @@ dotp_ms_f' = Graph  (M.fromList
               ])
 
 
-dotp_m_fs = Graph  (M.fromList
+dotp_m_fs = Graph "dotp_m_fs"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "If" 0
@@ -334,7 +334,7 @@ dotp_m_fs = Graph  (M.fromList
               ])
 
 
-dotp_m_fs' = Graph  (M.fromList
+dotp_m_fs' = Graph "dotp_m_fs"   (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "If" 0
@@ -364,7 +364,7 @@ dotp_m_fs' = Graph  (M.fromList
               ])
 
 
-dotp_m_f = Graph  (M.fromList
+dotp_m_f = Graph "dotp_m_f"  (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "m" 1
@@ -377,7 +377,7 @@ dotp_m_f = Graph  (M.fromList
               ])
 
 
-dotp_m_f' = Graph  (M.fromList
+dotp_m_f' = Graph "dotp_m_f"   (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "m" 1
@@ -391,7 +391,7 @@ dotp_m_f' = Graph  (M.fromList
 
 
 
-dotp_mf = Graph  (M.fromList
+dotp_mf = Graph "dotp_mf"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "mf" 5
@@ -401,7 +401,7 @@ dotp_mf = Graph  (M.fromList
               , SDFEdge "Z " "I " 1 1 1
               ])
 
-dotp_mf' = Graph  (M.fromList
+dotp_mf' = Graph "dotp_mf"   (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "mf" 5
@@ -416,7 +416,7 @@ dotp_mf' = Graph  (M.fromList
 -- dotp function folded starting with "hieracrhy"
 -----------------------------------------------------------------------------------------
 
-dotp_mm_f = Graph  (M.fromList
+dotp_mm_f = Graph "dotp_mm_f"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -440,7 +440,7 @@ dotp_mm_f = Graph  (M.fromList
               ])
 
 
-dotp_mm_f' = Graph  (M.fromList
+dotp_mm_f' = Graph "dotp_mm_f"   (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -468,7 +468,7 @@ dotp_mm_f' = Graph  (M.fromList
 -- dotp function folded starting with everything unfolded
 -----------------------------------------------------------------------------------------
 
-dotp_mm_fs = Graph  (M.fromList
+dotp_mm_fs = Graph "dotp_mm_fs"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -505,7 +505,7 @@ dotp_mm_fs = Graph  (M.fromList
               ])
 
 
-dotp_mm_fs' = Graph  (M.fromList
+dotp_mm_fs' = Graph "dotp_mm_fs"   (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -544,7 +544,7 @@ dotp_mm_fs' = Graph  (M.fromList
 -- dotp function folded m and f
 ----------------------------------------------------------------------------------------
 
-dotp_mm_ff = Graph  (M.fromList
+dotp_mm_ff = Graph "dotp_mm_ff"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -574,7 +574,7 @@ dotp_mm_ff = Graph  (M.fromList
               ])
 
 
-dotp_mm_ff' = Graph  (M.fromList
+dotp_mm_ff' = Graph "dotp_mm_ff"   (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -607,7 +607,7 @@ dotp_mm_ff' = Graph  (M.fromList
 -- dotp function folded with I and Z inside the "loop"
 -----------------------------------------------------------------------------------------
 
-dotp_miz_f = Graph  (M.fromList
+dotp_miz_f = Graph "dotp_miz_f"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "Im" 0
@@ -636,7 +636,7 @@ dotp_miz_f = Graph  (M.fromList
 
 
 
-dotpGf = Graph  (M.fromList
+dotpGf = Graph "dotpGf"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "m " 1
@@ -649,7 +649,7 @@ dotpGf = Graph  (M.fromList
               , SDFEdge "Z " "I " 1 1 1
               ])
 
-dotpGc = Graph  (M.fromList
+dotpGc = Graph "dotpGc"  (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "m " 1

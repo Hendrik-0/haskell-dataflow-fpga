@@ -9,7 +9,7 @@ import SVGWriter
 
 hsdfNode l ex = (l,HSDFNode l ex)
 
-hs  = Graph   (M.fromList
+hs  = Graph "hs"   (M.fromList
               [ hsdfNode "a" 3
               , hsdfNode "b" 0
               ])
@@ -19,7 +19,7 @@ hs  = Graph   (M.fromList
               ])
 
 
-foldg1  = Graph (M.fromList
+foldg1  = Graph "foldg1" (M.fromList
               [ hsdfNode "S1" 0
               , hsdfNode "S2" 0
               , hsdfNode "f1" 1
@@ -46,7 +46,7 @@ foldg1  = Graph (M.fromList
               ])
 
 
-foldg2  = Graph (M.fromList
+foldg2  = Graph "foldg2" (M.fromList
               [ hsdfNode "S1" 0
               , hsdfNode "S2" 0
               , hsdfNode "f'" 1
@@ -65,7 +65,7 @@ foldg2  = Graph (M.fromList
               ])
 
 
-foldg3  = Graph (M.fromList
+foldg3  = Graph "foldg3" (M.fromList
               [ hsdfNode "S1" 0
               , hsdfNode "S2" 0
               , hsdfNode "f1" 1
@@ -87,7 +87,7 @@ foldg3  = Graph (M.fromList
 
 
 
-fg3  = Graph (M.fromList
+fg3  = Graph "fg3" (M.fromList
               [ hsdfNode "S " 0
               , hsdfNode "Sf" 0
               , hsdfNode "Sg" 0
@@ -165,7 +165,7 @@ fg3  = Graph (M.fromList
               ])
 
 
-g1  = Graph (M.fromList
+g1  = Graph "g1" (M.fromList
               [ hsdfNode "a" 2
               , hsdfNode "b" 1
               , hsdfNode "c" 3
@@ -176,7 +176,7 @@ g1  = Graph (M.fromList
               ])
 
 
-step1 = Graph (M.fromList
+step1 = Graph "step1" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "f1" 1
@@ -209,7 +209,7 @@ step1 = Graph (M.fromList
               , SDFEdge "Z " "I " 1 1 1
               ])
 
-step1' = Graph (M.fromList
+step1' = Graph "step1'" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "ft" 4
@@ -235,7 +235,7 @@ step1' = Graph (M.fromList
 
 
 
-step1'' = Graph (M.fromList
+step1'' = Graph "step1''" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "ft" 4
@@ -252,7 +252,7 @@ step1'' = Graph (M.fromList
 
 
 
-step2 = Graph (M.fromList
+step2 = Graph "step2" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "If" 0
@@ -283,7 +283,7 @@ step2 = Graph (M.fromList
               ])
 
 
-ng = Graph (M.fromList
+ng = Graph "ng" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
 
@@ -334,7 +334,7 @@ ng = Graph (M.fromList
 
 
 
-ng1 = Graph (M.fromList
+ng1 = Graph "ng1" (M.fromList
               [ hsdfNode "If" 0
               , hsdfNode "Zf" 0
               , hsdfNode "f'" 1
@@ -345,7 +345,7 @@ ng1 = Graph (M.fromList
               , SDFEdge "Zf" "If" 1 1 1
               ])
 
-ng2 = Graph (M.fromList
+ng2 = Graph "ng2" (M.fromList
               [ hsdfNode "Ig" 0
               , hsdfNode "Zg" 0
               , hsdfNode "g1" 1
@@ -358,7 +358,7 @@ ng2 = Graph (M.fromList
               , SDFEdge "Zg" "Ig" 1 1 1
               ])
 
-ng3 = Graph (M.fromList
+ng3 = Graph "ng3" (M.fromList
               [ hsdfNode "Ih" 0
               , hsdfNode "Zh" 0
               , hsdfNode "h1" 1
@@ -381,7 +381,7 @@ ng3 = Graph (M.fromList
 ------------------------------------------------------------------------------------------------------
 ------------------------------------------------------------------------------------------------------
 
-tg = Graph (M.fromList
+tg = Graph "tg" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
 
@@ -409,7 +409,7 @@ tg = Graph (M.fromList
               , SDFEdge "Z " "I " 1 1 1
               ])
 
-tg1 = Graph (M.fromList
+tg1 = Graph "tg1" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
 
@@ -454,7 +454,7 @@ tg1 = Graph (M.fromList
               ])
 
 
-tg1' = Graph (M.fromList
+tg1' = Graph "tg1'" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
 
@@ -489,7 +489,7 @@ tg1' = Graph (M.fromList
               ])
 
 
-tg2' = Graph (M.fromList
+tg2' =  Graph "tg2'" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
 
@@ -531,7 +531,7 @@ tg2' = Graph (M.fromList
 
 
 
-tg2 = Graph (M.fromList
+tg2 = Graph "tg2" (M.fromList
               [ hsdfNode "I " 0
 
               , hsdfNode "Ia" 0
@@ -592,7 +592,7 @@ tg2 = Graph (M.fromList
               ])
 
 
-cg2 = Graph (M.fromList
+cg2 = Graph "cg2" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "a'" 1
@@ -623,7 +623,7 @@ cg2 = Graph (M.fromList
               ])
 
 
-cg2' = Graph (M.fromList
+cg2' = Graph "cg2'" (M.fromList
               [ hsdfNode "I " 0
               , hsdfNode "Z " 0
               , hsdfNode "a'" 1
@@ -654,7 +654,7 @@ cg2' = Graph (M.fromList
 
 
 
-tgf =  Graph (M.fromList
+tgf =  Graph "tgf" (M.fromList
               [ hsdfNode "If" 0
               , hsdfNode "Zf" 0
               , hsdfNode "f1" 1
@@ -676,7 +676,7 @@ tgf =  Graph (M.fromList
               , SDFEdge "Zf" "If" 1 1 1
               ])
 
-s2 =  Graph (M.fromList
+s2 =  Graph "s2" (M.fromList
               [ hsdfNode "I" 0
               , hsdfNode "Z" 0
               , hsdfNode "f" 1
