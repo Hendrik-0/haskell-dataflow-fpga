@@ -68,8 +68,9 @@ canNodeFireCount label graph periodCount = minimum edgeConstraints -- minimum de
 
 
 updateGraphWithNodeStartFiring :: (Graphs g, Eq l) => l -> g ns [DFEdge l] -> Int -> Graph ns [DFEdge l]
-updateGraphWithNodeStartFiring label graph periodCount = (Graph ns es')
+updateGraphWithNodeStartFiring label graph periodCount = (Graph na ns es')
   where
+    na = name graph
     es = edges graph
     ns = nodes graph
     etn = edgesToNode label es      -- edges to the current node
@@ -85,8 +86,9 @@ updateGraphWithNodeStartFiring label graph periodCount = (Graph ns es')
 
 
 updateGraphWithNodeEndFiring :: (Graphs g, Eq a) => g ns [DFEdge a] -> (a, Int) -> Graph ns [DFEdge a]
-updateGraphWithNodeEndFiring graph (label, periodCount) = (Graph ns es')
+updateGraphWithNodeEndFiring graph (label, periodCount) = (Graph na ns es')
   where
+    na = name graph
     es = edges graph
     ns = nodes graph
     efn = edgesFromNode label es    -- edges from the current node

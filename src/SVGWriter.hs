@@ -9,12 +9,22 @@ import qualified Data.List as L
 import Data.String
 import Data.Ratio
 import Data.Maybe
+import Data.Char
+
+-- import System.IO
+import System.Directory
+import System.FilePath.Posix
 
 import Hardware
 import DataFlow
-import Graph
+import Graph as G
 
 import Debug.Trace
+
+import Control.Monad (forM_)
+import qualified Text.Blaze.Html5 as H
+import qualified Text.Blaze.Html5.Attributes as A
+import Text.Blaze.Html.Renderer.String
 
 scalar :: RealFloat a => a
 scalar = 15
@@ -23,17 +33,6 @@ svg :: RealFloat a => a -> a -> Element -> Element
 svg w h content =
      doctype
   <> with (svg11_ content) [Version_ <<- "1.1", Width_ <<- toText w, Height_ <<- toText h]
-
--- contents :: Element
--- contents =
---      --rect_   [ X_ <<- "20", Y_ <<- "20",  Width_ <<- "10", Height_ <<- "10", "blue" ->> Fill_]
---      periodicRects 0 0  (0  ,50 ) 10 10 1200
---  <> periodicRects 0 20 (160,200) 40 10 1200
---  <> circle_ [ Cx_ <<- "150", Cy_ <<- "100", R_ <<- "80", Fill_ <<- "green"]
---  <> text_   [ X_ <<- "150", Y_ <<- "125", Font_size_ <<- "60", Text_anchor_ <<- "middle", Fill_ <<- "white"] "SVG"
---  <> txt 0 10 10 "habla"
---  <> txt 0 60 50 "test"
---  <> actor 10 50 "*" (0,50) 10 15 1200
 
 
 -- rect arguments
@@ -143,24 +142,6 @@ columnLines x y h endX startCount stepSize
             ]
   )
 
-{-
--- vline arguments
--- x: x-coordinate of left upper corner of schedule (excluding text)
--- y: y-coordinate of left upper corner of schedule (excluding text)
--- l: length of lines
--- s: stroke pattern
--- m: length of schedule pattern
--- p: period between lines
--- c: color
-vlines :: (Enum a, RealFloat a) => a -> a -> a -> a -> a -> a -> Data.Text.Internal.Text -> Element
-vlines x y l s m p c = mconcat  [ line x' y1 x' y2 s c
-                                | let y1 = y
-                                , let y2 = y+l
-                                , x' <- [x,x+p..m]
-                                ]
--}
-
-
 -- actorST arguments, ST because of sim table
 -- tx: start x of text column
 -- y: y-coordinate
@@ -200,12 +181,18 @@ actorST tx y sx h text firings
 -- simTable: simulation table, continging a list of tuples with (label, startTime, endTime)
 -- y: starting coordinate, if schedule spans over multiple lanes, the y' is the resulting y coordinate
 -- node: node to draw the schedule for
-actorST' :: (RealFloat a, Nodes n, Eq l, Show l) => a -> a -> a -> [(l, a, a)] -> a -> n l -> (a, Element)
+actorST' :: (RealFloat a, Eq l, Show l)
+  => a -> a -> a
+  -> [(l, a, a)]
+  -> a
+  -> DFNode l
+  -> (a, Element)
 actorST' tx sx h simTable y node = (y', element)
   where
-    (lastY, element) = actorST tx y sx h (label node) firings'
+    nlabel = label node
+    (lastY, element) = actorST tx y sx h nlabel firings'
     y' = lastY -- y + (maxAi+1) * h
-    firings = filter (\(lbl,_,_) -> lbl == (label node)) simTable   -- filter all firings from the current node
+    firings = filter (\(lbl,_,_) -> lbl == nlabel) simTable   -- filter all firings from the current node
     firings' = map (\(_,st,et) -> (st, et)) firings                 -- get only start and end times of every firing
 
 
@@ -217,15 +204,19 @@ actorST' tx sx h simTable y node = (y', element)
 -- simTable: the simulation table for which a schedule must be drawn, containing tuples with: (label, startTime, endTime) of every firing instance
 -- ns : nodes of the graph
 -- clStepSize: step size of the column lines.
-actorsST :: (Show k, Enum a, RealFloat a, DFNodes n, Eq l, Show l) => a -> a -> a -> a -> [(l, a, a)] -> M.Map k (n l) -> a -> (a, Element)
+actorsST :: (Enum a, RealFloat a, Eq l, Show l) => a -> a -> a -> a
+  -> [(l, a, a)]
+  -> [DFNode l]
+  -> a
+  -> (a, Element)
 actorsST x y h endX simTable ns clStepSize = (lastY, element)
   where
     (lastYColumnLines, columnElem) = columnLines sx y th endX 0 clStepSize
-    (lastYSchedule, actorElems) = L.mapAccumL (actorST' x sx h simTable) y (M.elems ns)
+    (lastYSchedule, actorElems) = L.mapAccumL (actorST' x sx h simTable) y ns
     element = mconcat (columnElem:actorElems)
     th = lastYSchedule + h - y
     lastY = lastYColumnLines
-    sx = x + (fromIntegral $ maximum $ map (length . show) (M.keys ns))     -- start periods at x + maximum label length
+    sx = x + (fromIntegral $ maximum $ map (length . show) (map label ns))     -- start periods at x + maximum label length
 
 
 -- converts a ratio to a Fractional
@@ -240,10 +231,8 @@ spsMmapToSimTable :: (Enum a, Ord a, Fractional a)
 spsMmapToSimTable mmap endX = simTable
   where
     simTable = concat $ M.elems $ M.mapWithKey nodeFirings mmap
-    nodeFirings lbl (startTime, period, exTime)
-      = [(lbl, st, et)  | st <- [sx, (sx + p)..endX], let et = st + (fromInteger exTime), st >= 0]
+    nodeFirings lbl (startTime, period, exTime) = [(lbl, st, et)  | st <- [sx, (sx + p)..endX], let et = st + (fromInteger exTime), st >= 0]
       where
-        -- endX' = scalar * endX
         p  = ratioToFrac period --  (fromInteger $ numerator period) / (fromInteger $ denominator period)
         sx = ratioToFrac startTime -- (fromInteger $ numerator startTime) / (fromInteger $ denominator startTime)
 
@@ -254,23 +243,28 @@ spsMmapToSimTable mmap endX = simTable
 -- rowHeight: the height of each row in the schedule
 -- endX: x-coordinate of right side of the schedule
 -- graph: the graph
-svgStrictlyPeriodicSchedule :: (DFEdges e, DFNodes n, Enum a, RealFloat a, Show l, Ord l, Eq (e l))
-  => a -> a -> a -> a -> Graph (M.Map l (n l)) [e l] -> (a, Element)
-svgStrictlyPeriodicSchedule x rowHeight endX y graph
-  | isNothing mmap' = (fontSize, txt x y fontSize "start" "No Strictly Periodic Schedule")
-  | otherwise =       (lastY,    txt x y fontSize "start" "Strictly Periodic Schedule"
-                                 <> scheduleElement
-                      )
+svgStrictlyPeriodicSchedule :: (Enum a, RealFloat a, Show l, Ord l)
+  => a
+  -> a
+  -> String
+  -> Graph [DFNode l] [DFEdge l]
+  -> IO (Maybe String)
+svgStrictlyPeriodicSchedule canvasWidth rowHeight dirname graph = do
+  if isJust mmap' then do writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
+  else return ()
+  return (if isJust mmap' then Just filename else Nothing)
   where
-    (lastY, scheduleElement) = actorsST startX startY rowHeight endX simTable (nodes graph) clStepSize
-    fontSize = 0.8 * scalar*rowHeight
-    startX = x
-    startY = y + rowHeight -- after text
+    filename = (name graph ++ " - sp") <.> "svg"
 
-    mmap' = strictlyPeriodicScheduleWithExTime graph
-    mmap = fromJust mmap'
-    simTable = spsMmapToSimTable mmap (endX / scalar)      -- convert the mmap to simTable, we only need to schedule up to the width of the canvas
-    clStepSize = maximum $ M.elems $ M.map (\(_,p,_) -> ratioToFrac p) mmap -- step size of the column lines is largest period (they are probably all the same)
+    startX      = 0
+    startY      = rowHeight -- after text
+    (lastY, scheduleElement) = actorsST startX startY rowHeight canvasWidth simTable (nodes graph) clStepSize
+    canvasHeight = scalar * lastY
+
+    mmap'       = strictlyPeriodicScheduleWithExTime (graphMap graph)
+    mmap        = fromJust mmap'
+    simTable    = spsMmapToSimTable mmap (canvasWidth / scalar)      -- convert the mmap to simTable, we only need to schedule up to the width of the canvas
+    clStepSize  = maximum $ M.elems $ M.map (\(_,p,_) -> ratioToFrac p) mmap -- step size of the column lines is largest period (they are probably all the same)
 
 
 -- creates an svg Element and the lastY
@@ -279,137 +273,118 @@ svgStrictlyPeriodicSchedule x rowHeight endX y graph
 -- rowHeight: the height of each row in the schedule
 -- endX: x-coordinate of right side of the schedule
 -- graph: the graph
-svgSelfTimedSchedule :: (Enum a, RealFloat a, DFNodes n, Show l, Ord l)
-  => a -> a -> a -> a -> Graph (M.Map l (n l)) [DFEdge l] -> (a, Element)
-svgSelfTimedSchedule x rowHeight endX y graph
-  | isNothing mcr = (fontSize, txt x y fontSize "start" "Deadlock")
-  | otherwise =     (lastY,    txt x y fontSize "start" "Self Timed Schedule"
-                               <> scheduleElement
-                    )
+svgSelfTimedSchedule :: (Enum a, RealFloat a, Show l, Ord l)
+  => a
+  -> a
+  -> String
+  -> Graph [DFNode l] [DFEdge l]
+  -> IO (Maybe String)
+svgSelfTimedSchedule canvasWidth rowHeight dirname graph' = do
+  if isJust mcr then do writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
+  else return ()
+  return (if isJust mcr then Just filename else Nothing) -- if file is existing or not
   where
-    ns = nodes graph
-    (lastY, scheduleElement) = actorsST startX startY rowHeight endX simTable ns clStepSize
-    fontSize = 0.8 * scalar*rowHeight
-    startX = x
-    startY = y + rowHeight -- after text
+    -- Map graph to mapped graph
+    graph = graphMap graph'
+    filename = (name graph' ++ " - st") <.> "svg"
+
+    ns = nodes graph'
+    startX = 0
+    startY = rowHeight -- after text
+    (lastY, scheduleElement) = actorsST startX startY rowHeight canvasWidth simTable ns clStepSize
+    canvasHeight = scalar * lastY
 
     (mcr, _) = maxCycleRatio $ singleRateApx graph
-    ticks = div (fromIntegral $ round endX) (fromIntegral $ round scalar)  -- number of ticks to be sufficient to fill the entire canvassize
+    ticks = div (fromIntegral $ round canvasWidth) (fromIntegral $ round scalar)  -- number of ticks to be sufficient to fill the entire canvassize
     simTableST = concat $ snd $ selfTimedSchedule graph ticks                     -- simTable comming from selfTimedSchedule function
     simTable = map (\(lbl, _, stI, etI) -> (lbl, fromInteger stI, fromInteger etI)) simTableST -- remove periodCount, change Integers to RealFrac
-    clStepSize = max 1 $ fromIntegral $ maximum $ concat $ map wcet (M.elems ns)
+    clStepSize = max 1 $ fromIntegral $ maximum $ concat $ map wcet ns
 
 
-drawST :: (DFNodes n, Show l, Ord l)
-  => [Graph (M.Map l (n l)) [DFEdge l]] -> IO ()
-drawST graphs = writeFile path (show $ svg canvasWidth canvasHeight stElem)
+drawST :: (Show l, Ord l)
+  => String
+  -> [Graph [DFNode l] [DFEdge l]]
+  -> IO ()
+drawST dirname graphs = do
+  -- Ceate directory structure if not existing
+  createDirectoryIfMissing True dirname
+
+  schedules <- mapM sched (graphs)
+
+  -- Create HTML file as wrapper for SVGs
+  writeFile (joinPath [dirname, "st.html"]) $ renderHtml $ H.docTypeHtml $ do
+    H.head $ do
+      H.title "Schedules"
+    H.body (mconcat schedules)
   where
     canvasWidth = 1920
-    canvasHeight = lastY*scalar
-    endX = canvasWidth
-    startX = 4
-    startY = 4
+    rowHeight   = 2
+
+    sched graph = do
+      stSchedule <- svgSelfTimedSchedule canvasWidth rowHeight dirname graph
+      return $ mconcat [
+          H.h1 (H.toMarkup $ name graph)
+        , if isJust stSchedule then do mappend (H.h2 "Self Timed Schedule") (H.img H.! A.src (H.stringValue $ fromJust stSchedule)) else return ()
+        ]
+
+
+drawSPS :: (Show l, Ord l)
+  => String
+  -> [Graph [DFNode l] [DFEdge l]]
+  -> IO ()
+drawSPS dirname graphs = do
+  -- Ceate directory structure if not existing
+  createDirectoryIfMissing True dirname
+
+  schedules <- mapM sched (graphs)
+
+  -- Create HTML file as wrapper for SVGs
+  writeFile (joinPath [dirname, "sps.html"]) $ renderHtml $ H.docTypeHtml $ do
+    H.head $ do
+      H.title "Schedules"
+    H.body (mconcat schedules)
+  where
+    canvasWidth = 1920
     rowHeight = 2
-    path = "../schedules/svg.svg"
-    -- (lastY, stElem) = svgSelfTimedSchedule startX rowHeight endX startY graph
-    (lastY, stElems) = L.mapAccumL (svgSelfTimedSchedule startX rowHeight endX) startY graphs
-    stElem = mconcat stElems
 
-drawSPS :: (DFEdges e, DFNodes n, Show l, Ord l, Eq (e l))
-  => [Graph (M.Map l (n l)) [e l]] -> IO ()
-drawSPS graphs = writeFile path (show $ svg canvasWidth canvasHeight spsElem)
+    sched graph = do
+      spSchedule <- svgStrictlyPeriodicSchedule canvasWidth rowHeight dirname graph
+      return $ mconcat [
+          H.h1 (H.toMarkup $ name graph)
+        , if isJust spSchedule then do mappend (H.h2 "Strictly Periodic Schedule") (H.img H.! A.src (H.stringValue $ fromJust spSchedule)) else return ()
+        ]
+
+drawSchedules :: (Show l, Ord l)
+  => String
+  -> [Graph [DFNode l] [DFEdge l]]
+  -> IO ()
+drawSchedules dirname graphs = do
+  -- Ceate directory structure if not existing
+  createDirectoryIfMissing True dirname
+
+  schedules <- mapM sched (graphs)
+
+  -- Create HTML file as wrapper for SVGs
+  writeFile (joinPath [dirname, "all.html"]) $ renderHtml $ H.docTypeHtml $ do
+    H.head $ do
+      H.title "Schedules"
+    H.body (mconcat schedules)
   where
     canvasWidth = 1920
-    canvasHeight = lastY*scalar
-    endX = canvasWidth
-    startX = 4
-    startY = 4
     rowHeight = 2
-    path = "../schedules/svg.svg"
-    -- (lastY, spsElem) = svgStrictlyPeriodicSchedule startX rowHeight endX startY graph
-    (lastY, spsElems) = L.mapAccumL (svgStrictlyPeriodicSchedule startX rowHeight endX) startY graphs
-    spsElem = mconcat spsElems
 
-scheduleElems :: (Enum a, RealFloat a, DFNodes n, Show l, Ord l)
-  => a -> a -> a -> a -> Graph (M.Map l (n l)) [DFEdge l] -> (a, Element)
-scheduleElems startX rowHeight endX startY graph = (lastY, spsElem <> stElem)
-  where
-    (lastYSPS, spsElem) = svgStrictlyPeriodicSchedule startX rowHeight endX startY graph
-    (lastY   , stElem ) = svgSelfTimedSchedule startX rowHeight endX lastYSPS graph
+    sched graph = do
+      stSchedule <- svgSelfTimedSchedule        canvasWidth rowHeight dirname graph
+      spSchedule <- svgStrictlyPeriodicSchedule canvasWidth rowHeight dirname graph
+      return $ mconcat [
+          H.h1 (H.toMarkup $ name graph)
+        , if isJust stSchedule then do mappend (H.h2 "Self Timed Schedule"       ) (H.img H.! A.src (H.stringValue $ fromJust stSchedule)) else return ()
+        , if isJust spSchedule then do mappend (H.h2 "Strictly Periodic Schedule") (H.img H.! A.src (H.stringValue $ fromJust spSchedule)) else return ()
+        ]
 
+-- For translation between listed and mapped graphs
+graphMap :: (Ord l)
+  => Graph [DFNode l]           [DFEdge l]
+  -> Graph (M.Map l (DFNode l)) [DFEdge l]
+graphMap (Graph name ns e) = Graph name (M.fromList $ map (\n -> (label n, n)) ns) e
 
-drawSchedules :: (DFNodes n, Show l, Ord l)
-  => [Graph (M.Map l (n l)) [DFEdge l]] -> IO ()
-drawSchedules graphs = writeFile path (show $ svg canvasWidth canvasHeight elem)
-  where
-    canvasWidth = 1920
-    canvasHeight = lastY*scalar
-    endX = canvasWidth
-    startX = 4
-    startY = 4
-    rowHeight = 2
-    path = "../schedules/svg.svg"
-    (lastY, elems) = L.mapAccumL (scheduleElems startX rowHeight endX) startY graphs
-    elem = mconcat elems
-
-
-{- Below is the previous code for printing an SVG schedule of strictly periodic graphs, but the schedule is never printed in different lanes, meaning that firings will overlap if multiple firings are happening in parrallel
-
--- actorP arguments, P because periodic actor
--- tx: start x of text box
--- y: y-coordinate
--- sx: start x coordinate of the scheduling printing blocks
--- h: height of row
--- text: actor label
--- startTime: start time of actor
--- period: period of actor
--- exTime:  execution time (width of rectangle)
--- endX: length of text+pattern
-actorP :: (RealFloat a, Enum a) => a -> a -> a -> a -> a -> String -> (a,a) -> a -> Element
-actorP tx y sx h endX text (startTime,period) exTime
-  =  txt tx y (0.8*h*scalar) "start" text
-  <> periodicRects sx y (startTime,period) exTime h endX "green"
-
-
--- actorsP arguments, P because periodic actors
--- x: x-coordinate of left upper corner of schedule
--- y: y-coordinate of left upper corner of schedule
--- h: hight of schedule blocks
--- endX: length of schedule pattern
--- mmap: strict periodic schedule as M.Map with node label as key, and (start time, period, execution time) for each node as element
-actorsP :: (Show l, RealFloat a, Enum a) => a -> a -> a -> a -> M.Map l (Ratio Integer, Ratio Integer, Integer) -> Element
-actorsP x y h endX mmap
-  = columnLines sx y th endX 0 tp'
-  <> mconcat [actorP x y' sx h endX (show l) (st,p') ex'
-  | ((l,(s,p,ex)),y') <- zip (M.toList mmap) [y,(y+h)..]
-  , let p'  = ((fromInteger $ numerator p) / (fromInteger $ denominator p))
-  , let s'  = ((fromInteger $ numerator s) / (fromInteger $ denominator s))
-  , let st = if s' < 0 then s' + p' else s'
-  , let ex' = if ex == 0 then 1 else (fromInteger ex) -- if execution time is 0, print a small line (1) TODO: this is not small line anymore
-  ]
-  where
-    sx = x + (fromIntegral $ maximum $ map (length . show) (M.keys mmap)) -- start periods at x + maximum label length
-    th = h * (fromIntegral $ M.size mmap + 1) -- size +1 so some extra space beneath
-    tp = maximum $ map (\(_,p,_) -> p) $ M.elems mmap -- max period of all actors
-    tp' = (fromInteger $ numerator tp) / (fromIntegral $ denominator tp) -- from Ratio to Rational
-
-
-svgStrictlyPeriodicSchedule :: (Show l, DFEdges e, Ord l, DFNodes n, Eq (e l))
-  => Graph (M.Map l (n l)) [e l] -> IO ()
-svgStrictlyPeriodicSchedule graph
-  | isNothing mmap' = writeFile path (show $ svg canvasWidth canvasHeight $ txt startX startY 40 "start" "No schedule")
-  | otherwise = writeFile path (show $ svg canvasWidth canvasHeight $ actorsP startX startY height endX mmap)
-  where
-    -- Important: everything is scaled by the scaler defined in this file
-    canvasHeight = 1000
-    canvasWidth = 1920
-    height = 2 -- height of each row
-    startX = 4
-    startY = 4
-    endX = canvasWidth
-
-    mmap' = strictlyPeriodicScheduleWithExTime graph
-    mmap = fromJust mmap'
-
-    path = "../schedules/svg.svg"
--}

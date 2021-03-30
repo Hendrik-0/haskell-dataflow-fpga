@@ -18,7 +18,6 @@ data DFEdge n = HSDFEdge n n Integer
 data DFNode l = HSDFNode l  Integer
               | CSDFNode l [Integer]
 
---type DFGraph = Graph (M.Map Label DFNode) ([DFEdge Label])
 type DFGraph l = Graph (M.Map l (DFNode l)) [DFEdge l]
 
 

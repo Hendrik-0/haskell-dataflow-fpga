@@ -16,7 +16,7 @@ import Data.List
 repetitionVector :: (Ord l, DFNodes n, DFEdges e)
   => Graph (M.Map l (n l)) [e l]
   -> M.Map l Integer
-repetitionVector (Graph ns es)
+repetitionVector (Graph _ ns es)
   = M.map (numerator . (*l)) fs'
     where
       fs        = repetitionVectorF es
