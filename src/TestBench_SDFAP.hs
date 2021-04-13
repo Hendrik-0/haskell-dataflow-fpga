@@ -40,9 +40,62 @@ s1 = Graph
   [ hsdfNode "A" 1
   ])
   []
+-----------------------------------------------------------------------------------------
+-- Dotp graphs
+-----------------------------------------------------------------------------------------
 
+drawDotps = drawSchedules "../schedules" [dotp_2n, dotp_2nhf, dotp_2nff]
 
-dl = drawSchedules "../schedules" [lloyds_3n, lloyds_4n, lloyds_5n, lloyds_5nf]
+dotp_2n = Graph
+  "dotp_2n"
+    (M.fromList
+  [ hsdfNode "1-source1" 1
+  , hsdfNode "2-source2" 1
+  , hsdfNode "3-zipWith" 1
+  , hsdfNode "4-foldl" 1
+  , hsdfNode "5-sink" 1
+  ])
+  [ SDFAPEdge "1-source1" "3-zipWith" 0 [6] [6]
+  , SDFAPEdge "2-source2" "3-zipWith" 0 [6] [6]
+  , SDFAPEdge "3-zipWith" "4-foldl"   0 [6] [6]
+  , SDFAPEdge "4-foldl"   "5-sink"    0 [1] [1]
+  ]
+
+dotp_2nhf = Graph
+  "dotp_2nhf"
+    (M.fromList
+  [ hsdfNode "1-source1" 3
+  , hsdfNode "2-source2" 3
+  , hsdfNode "3-zipWith" 3
+  , hsdfNode "4-foldl" 1
+  , hsdfNode "5-sink" 1
+  ])
+  [ SDFAPEdge "1-source1" "3-zipWith" 0 [2,2,2] [2,2,2]
+  , SDFAPEdge "2-source2" "3-zipWith" 0 [2,2,2] [2,2,2]
+  , SDFAPEdge "3-zipWith" "4-foldl"   0 [2,2,2] [6]
+  , SDFAPEdge "4-foldl"   "5-sink"    0 [1]     [1]
+  ]
+
+dotp_2nff = Graph
+  "dotp_2nff"
+    (M.fromList
+  [ hsdfNode "1-source1" 3
+  , hsdfNode "2-source2" 3
+  , hsdfNode "3-zipWith" 3
+  , hsdfNode "4-foldl" 3
+  , hsdfNode "5-sink" 1
+  ])
+  [ SDFAPEdge "1-source1" "3-zipWith" 0 [2,2,2] [2,2,2]
+  , SDFAPEdge "2-source2" "3-zipWith" 0 [2,2,2] [2,2,2]
+  , SDFAPEdge "3-zipWith" "4-foldl"   0 [2,2,2] [2,2,2]
+  , SDFAPEdge "4-foldl"   "5-sink"    0 [0,0,1] [1]
+  ]
+
+-----------------------------------------------------------------------------------------
+-- Lloyds graphs
+-----------------------------------------------------------------------------------------
+
+drawLloyds = drawSchedules "../schedules" [lloyds_3n, lloyds_4n, lloyds_5n, lloyds_5nf]
 
 lloyds_3n = Graph 
   "lloyds 3n"
@@ -126,3 +179,5 @@ lloyds_5nf = Graph
   , SDFAPEdge "4-csasc"   "6-div"   0 [1,1,1]     [1,1,1]
   , SDFAPEdge "6-div"     "7-sink"  0 [1,1,1]     [3]
   ]  
+
+
