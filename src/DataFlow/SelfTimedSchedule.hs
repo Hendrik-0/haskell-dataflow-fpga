@@ -10,13 +10,19 @@ import Data.Maybe
 
 -- import Debug.Trace
 
+type SimMap l = M.Map l Int
+type SimTable l = [(l, Int, Integer, Integer)]
+type NexcMap l = M.Map l Int
+
 
 selfTimedSchedule :: (Ord l, DFNodes n)
   => Graph (M.Map l (n l)) [DFEdge l]
   -> Integer
-  -> ((Graph (M.Map l (n l)) [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)]), [[(l, Int, Integer, Integer)]])
+  -> ((Graph (M.Map l (n l)) [DFEdge l], SimMap l, SimTable l), [SimTable l])
 selfTimedSchedule graph nrOfTicks
-  = selfTimedSchedule' (graph, simMap, simTable) totalSimTable totalTicks tickStep tick
+  = if isSDFAP graph 
+      then selfTimedScheduleSDFAP graph nrOfTicks
+      else selfTimedSchedule' (graph, simMap, simTable) totalSimTable totalTicks tickStep tick
   where
     ns = nodes graph
     simMap = M.map (\_ -> 0) ns -- all periodCounts at the start are 0
@@ -30,12 +36,12 @@ selfTimedSchedule graph nrOfTicks
 -- A node can have an execution time of 0, therfore we need to simulate each tick of the simulation until nothing in the simMap changes anymore
 -- This is quite an in-efficient method, but it works, TODO: optimize
 selfTimedSchedule' :: (DFNodes n, Ord l)
-  => (Graph (M.Map k (n l)) [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)])
-  -> [[(l, Int, Integer, Integer)]]
+  => (Graph (M.Map k (n l)) [DFEdge l], SimMap l, SimTable l)
+  -> [SimTable l]
   -> Integer
   -> Integer
   -> Integer
-  -> ((Graph (M.Map k (n l)) [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)]), [[(l, Int, Integer, Integer)]])
+  -> ((Graph (M.Map k (n l)) [DFEdge l], SimMap l, SimTable l), [SimTable l])
 selfTimedSchedule' (graph, simMap, simTable) totalSimTable totalTicks tickStep tick
   | tick >= totalTicks = ((graph', simMap', simTable'), totalSimTable)
   | simMap' == simMap = selfTimedSchedule' (graph', simMap', simTable') totalSimTable' totalTicks tickStep (tick + tickStep)
@@ -106,9 +112,9 @@ updateGraphWithNodeEndFiring graph (label, periodCount) = (Graph na ns es')
 -- simMap contains the node label and period count
 -- simTable is a list of all active firings in a 4 tupple as: (label, periodCount, startTime, remainingExecutionTime)
 updateNode :: (DFNodes n, Ord l)
-  => (Graph ns [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)])
+  => (Graph ns [DFEdge l], SimMap l, SimTable l)
   -> (n l, Integer)
-  -> ((Graph ns [DFEdge l], M.Map l Int, [(l, Int, Integer, Integer)]), [(l, Int, Integer, Integer)])
+  -> ((Graph ns [DFEdge l], SimMap l, SimTable l), SimTable l)
 updateNode (graph, simMap, simTable) (node, tick)
   = case iCanNodeFireCount > 0 of                    -- has a node fired, one or more times?
       False -> ((graph' , simMap , simTable' ), [])   -- no, only provide update graph and simTable (because node firings could have ended), no starting Nodes
@@ -146,3 +152,132 @@ addNodeFiringToSimTable node startTime pc = (label node, pc, startTime, endTime)
                   else mod pc (length $ wcet node) -- modulus the wcet length because every node can have its own wcet list
     exTime = (wcet node)!!wcetIndex
     endTime = startTime + exTime
+
+
+
+isSDFAP (Graph na ns []) = True
+isSDFAP (Graph na ns es) = isSDFAPEdge (es!!0)
+  where
+    isSDFAPEdge (SDFAPEdge _ _ _ _ _) = True
+    isSDFAPEdge _                       = False
+
+
+selfTimedScheduleSDFAP :: (DFNodes n, Ord l) 
+  => Graph (M.Map l (n l)) [DFEdge l]
+  -> Integer
+  -> ((Graph (M.Map l (n l)) [DFEdge l], M.Map k a, SimTable l),[SimTable l])
+selfTimedScheduleSDFAP graph nrOfTicks = ((graph', M.empty , simTable'), totalSimTable)
+  where
+    ns = nodes graph
+    nexcMap = M.map (\_ -> -1) ns
+    simTable = []
+    totalSimTable = [simTable']
+    (graph', nexcMap', simTable') = foldl updateGraphTick (graph, nexcMap, simTable) [0..nrOfTicks]
+
+
+updateGraphTick :: (Foldable t, DFNodes n, Ord l) 
+  => (Graph (t (n l)) [DFEdge l], NexcMap l, SimTable l)
+  -> Integer 
+  -> (Graph (t (n l)) [DFEdge l], NexcMap l, SimTable l)
+updateGraphTick (graph, nexcMap, simTable) tick = (graph', nexcMap', simTable')
+  where
+    ns = nodes graph
+    graphP = foldl (updateNodeProductions nexcMap) graph ns
+    (graph', nexcMap', simTable') = foldl (updateNodeConsumptions tick nexcMap) (graphP, nexcMap, simTable) ns
+
+
+postscanl :: (a -> b -> a) -> a -> [b] -> [a]
+postscanl f z xs = tail (scanl f z xs)
+
+
+updateNodeProductions :: (Nodes n, Ord l) 
+  => NexcMap l 
+  -> Graph ns [DFEdge l] -> n l -> Graph ns [DFEdge l]
+updateNodeProductions nexcMap graph node  | nodeRunning = graph'
+                                          | otherwise   = graph
+  where
+    na = name graph
+    es = edges graph
+    ns = nodes graph
+    lbl = label node
+
+    Just nexc = M.lookup lbl nexcMap
+    nodeRunning = nexc >= 0
+
+    efn = edgesFromNode lbl es
+    efn' = map updateEdgeP efn
+      where
+        updateEdgeP edge = produceTokens nr edge
+          where
+            pp = production edge
+            nr = (reverse pp)!!nexc
+    es' = (es L.\\ efn) ++ efn'
+    graph' = (Graph na ns es')
+
+
+updateNodeConsumptions :: (DFNodes n, Ord l) 
+  => Integer
+  -> M.Map l Int
+  -> (Graph ns [DFEdge l], NexcMap l, SimTable l)
+  -> n l
+  -> (Graph ns [DFEdge l], NexcMap l, SimTable l)
+updateNodeConsumptions tick nexcMapF (graph, nexcMap, simTable) node 
+  = (graph', nexcMap', simTable')
+  where
+    na = name graph
+    es = edges graph
+    ns = nodes graph
+    lbl = label node
+
+    Just nexc = M.lookup lbl nexcMapF
+    nodeRunning = nexc >= 0
+    etn = edgesToNode lbl es
+
+    edgeFireEnables = map edgeCheck etn
+    nodeLastFiring = nexc == 0
+    enoughDataAvail = all (==True) edgeFireEnables
+
+    nodeStartingORRunning = nexc' >= 0
+
+    edgeCheck edge = canFire
+      where
+        src = source edge
+        Just nexcP = M.lookup src nexcMapF -- lookup the nexc of the source node
+        -- producingNodeRunning = nexcP >= 0
+        ipp = take nexcP (reverse $ production edge)
+        cp  = consumption edge
+        lpp = length ipp
+        lcp = length cp
+        (ipp', cp') = if lpp == lcp
+                        then (ipp,cp)
+                        else  if lpp < lcp
+                                then (ipp ++ (repeat 0), cp)
+                                else (ipp, cp ++ (repeat 0))
+        ppsnl = postscanl (+) 0 ipp'
+        cpsnl = postscanl (+) 0 cp'
+        fcRequired = maximum $ zipWith (-) cpsnl ppsnl
+        fc = tokens edge
+        canFire = fc >= fcRequired
+
+    nexc' = case (nodeRunning, enoughDataAvail, nodeLastFiring) of
+      (True , True , True) -> fromInteger $ head (wcet node) - 1  -- Node is running, enough data, Last firing -> start again
+      (True , _    , _   ) -> nexc - 1                            -- Node is running, not the last firing -> continue firing
+      (False, True , _   ) -> fromInteger $ head (wcet node) - 1  -- Node is idle, enough data, last firing (does not make sense) -> so start firing
+      (False, False, _   ) -> nexc                                -- Node is idle, not enough data, last firing (does not make sense) -> do nothing
+
+    etn' = map updateEdgeC etn
+      where
+        updateEdgeC edge = consumeTokens nr edge
+          where
+            cp = consumption edge
+            nr = cp!!nexc'
+
+    es' = (es L.\\ etn) ++ etn'
+    graph' =  if nodeStartingORRunning
+                then (Graph na ns es')
+                else (Graph na ns es)
+    nexcMap' = M.insert lbl nexc' nexcMap
+    simTable' = if nodeStartingORRunning
+                  then simTable ++ [(lbl, 0, tick, tick+1)]
+                  else simTable
+

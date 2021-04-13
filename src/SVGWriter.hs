@@ -243,16 +243,19 @@ spsMmapToSimTable mmap endX = simTable
 -- rowHeight: the height of each row in the schedule
 -- endX: x-coordinate of right side of the schedule
 -- graph: the graph
-svgStrictlyPeriodicSchedule :: (DFEdges e, DFNodes n, Enum a, RealFloat a, Show l, Ord l, Eq (e l))
+svgStrictlyPeriodicSchedule :: (DFNodes n, Enum a, RealFloat a, Show l, Ord l)
   => a
   -> a
   -> String
-  -> Graph (M.Map l (n l)) [e l]
+  -> Graph (M.Map l (n l)) [DFEdge l]
   -> IO (Maybe String)
 svgStrictlyPeriodicSchedule canvasWidth rowHeight dirname graph = do
-  if isJust mmap' then do writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
-  else return ()
-  return (if isJust mmap' then Just filename else Nothing)
+  if isJust mmap' 
+    then do writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
+    else return ()
+  return (if isJust mmap' 
+            then Just filename 
+            else Nothing)
   where
     filename = (name graph ++ " - sp") <.> "svg"
 
@@ -261,7 +264,9 @@ svgStrictlyPeriodicSchedule canvasWidth rowHeight dirname graph = do
     (lastY, scheduleElement) = actorsST startX startY rowHeight canvasWidth simTable (nodes graph) clStepSize
     canvasHeight = scalar * lastY
 
-    mmap'       = strictlyPeriodicScheduleWithExTime graph
+    mmap'       = if isSDFAP graph
+                    then Nothing  -- TODO: strictly periodic schedule not working for SDFAP yet
+                    else strictlyPeriodicScheduleWithExTime graph
     mmap        = fromJust mmap'
     simTable    = spsMmapToSimTable mmap (canvasWidth / scalar)      -- convert the mmap to simTable, we only need to schedule up to the width of the canvas
     clStepSize  = maximum $ M.elems $ M.map (\(_,p,_) -> ratioToFrac p) mmap -- step size of the column lines is largest period (they are probably all the same)
@@ -280,9 +285,12 @@ svgSelfTimedSchedule :: (DFNodes n, Enum a, RealFloat a, Show l, Ord l)
   -> Graph (M.Map l (n l)) [DFEdge l]
   -> IO (Maybe String)
 svgSelfTimedSchedule canvasWidth rowHeight dirname graph = do
-  if isJust mcr then do writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
-  else return ()
-  return (if isJust mcr then Just filename else Nothing) -- if file is existing or not
+  if isJust mcr 
+    then do writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
+    else return ()
+  return (if isJust mcr 
+            then Just filename 
+            else Nothing) -- if file is existing or not
   where
     filename = (name graph ++ " - st") <.> "svg"
 
@@ -291,12 +299,15 @@ svgSelfTimedSchedule canvasWidth rowHeight dirname graph = do
     startY = rowHeight -- after text
     (lastY, scheduleElement) = actorsST startX startY rowHeight canvasWidth simTable ns clStepSize
     canvasHeight = scalar * lastY
-
-    (mcr, _) = maxCycleRatio $ singleRateApx graph
+    (mcr, _) =  if isSDFAP graph
+                  then (Just 0, Nothing) -- TODO: mcr calculation not available yet for SDFAP
+                  else maxCycleRatio $ singleRateApx graph
     ticks = div (fromIntegral $ round canvasWidth) (fromIntegral $ round scalar)  -- number of ticks to be sufficient to fill the entire canvassize
-    simTableST = concat $ snd $ selfTimedSchedule graph ticks                     -- simTable comming from selfTimedSchedule function
+    simTableST =  concat $ snd $ selfTimedSchedule graph ticks                     -- simTable comming from selfTimedSchedule function
     simTable = map (\(lbl, _, stI, etI) -> (lbl, fromInteger stI, fromInteger etI)) simTableST -- remove periodCount, change Integers to RealFrac
-    clStepSize = max 1 $ fromIntegral $ maximum $ concat $ map wcet (M.elems ns)
+    clStepSize = if isSDFAP graph
+                    then 1
+                    else max 1 $ fromIntegral $ maximum $ concat $ map wcet (M.elems ns)
 
 
 drawST :: (DFNodes n, Show l, Ord l)
@@ -326,9 +337,9 @@ drawST dirname graphs = do
         ]
 
 
-drawSPS :: (DFEdges e, DFNodes n, Show l, Ord l, Eq (e l))
+drawSPS :: (DFNodes n, Show l, Ord l)
   => String
-  -> [Graph (M.Map l (n l)) [e l]]
+  -> [Graph (M.Map l (n l)) [DFEdge l]]
   -> IO ()
 drawSPS dirname graphs = do
   -- Ceate directory structure if not existing
