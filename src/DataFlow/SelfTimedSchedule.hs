@@ -15,10 +15,10 @@ type SimTable l = [(l, Int, Integer, Integer)]
 type NexcMap l = M.Map l Int
 
 
--- selfTimedSchedule :: (Ord l, DFNodes n)
---   => Graph (M.Map l (n l)) [DFEdge l]
---   -> Integer
---   -> ((Graph (M.Map l (n l)) [DFEdge l], SimMap l, SimTable l), [SimTable l])
+selfTimedSchedule :: (Ord l, DFNodes n)
+  => Graph (M.Map l (n l)) [DFEdge l]
+  -> Integer
+  -> ((Graph (M.Map l (n l)) [DFEdge l], SimMap l, SimTable l), [SimTable l])
 selfTimedSchedule graph nrOfTicks
   = if isSDFAP graph 
       then selfTimedScheduleSDFAP graph nrOfTicks
@@ -162,10 +162,10 @@ isSDFAP (Graph na ns es) = isSDFAPEdge (es!!0)
     isSDFAPEdge _                       = False
 
 
--- selfTimedScheduleSDFAP :: (DFNodes n, Ord l) 
---   => Graph (M.Map l (n l)) [DFEdge l]
---   -> Integer
---   -> ((Graph (M.Map l (n l)) [DFEdge l], M.Map k a, SimTable l),[SimTable l])
+selfTimedScheduleSDFAP :: (DFNodes n, Ord l) 
+  => Graph (M.Map l (n l)) [DFEdge l]
+  -> Integer
+  -> ((Graph (M.Map l (n l)) [DFEdge l], M.Map k a, SimTable l),[SimTable l])
 selfTimedScheduleSDFAP graph nrOfTicks = ((graph', M.empty , simTable'), totalSimTable)
   where
     ns = nodes graph
@@ -175,10 +175,10 @@ selfTimedScheduleSDFAP graph nrOfTicks = ((graph', M.empty , simTable'), totalSi
     (graph', nexcMap', simTable') = foldl updateGraphTick (graph, nexcMap, simTable) [0..nrOfTicks]
 
 
--- updateGraphTick :: (Foldable t, DFNodes n, Ord l) 
---   => (Graph (t (n l)) [DFEdge l], NexcMap l, SimTable l)
---   -> Integer 
---   -> (Graph (t (n l)) [DFEdge l], NexcMap l, SimTable l)
+updateGraphTick :: (Foldable t, DFNodes n, Ord l) 
+  => (Graph (t (n l)) [DFEdge l], NexcMap l, SimTable l)
+  -> Integer 
+  -> (Graph (t (n l)) [DFEdge l], NexcMap l, SimTable l)
 updateGraphTick (graph, nexcMap, simTable) tick = (graph', nexcMap', simTable')
   where
     ns = nodes graph
@@ -190,9 +190,9 @@ postscanl :: (a -> b -> a) -> a -> [b] -> [a]
 postscanl f z xs = tail (scanl f z xs)
 
 
--- updateNodeProductions :: (Nodes n, Ord l) 
---   => NexcMap l 
---   -> Graph ns [DFEdge l] -> n l -> Graph ns [DFEdge l]
+updateNodeProductions :: (Nodes n, Ord l) 
+  => NexcMap l 
+  -> Graph ns [DFEdge l] -> n l -> Graph ns [DFEdge l]
 updateNodeProductions nexcMap graph node  | nodeRunning = graph'
                                           | otherwise   = graph
   where
@@ -215,24 +215,15 @@ updateNodeProductions nexcMap graph node  | nodeRunning = graph'
     graph' = (Graph na ns es')
 
 
--- updateNodeConsumptions :: (DFNodes n, Ord l) 
---   => Integer
---   -> M.Map l Int
---   -> (Graph ns [DFEdge l], NexcMap l, SimTable l)
---   -> n l
---   -> (Graph ns [DFEdge l], NexcMap l, SimTable l)
+updateNodeConsumptions :: (DFNodes n, Ord l) 
+  => Integer
+  -> M.Map l Int
+  -> (Graph ns [DFEdge l], NexcMap l, SimTable l)
+  -> n l
+  -> (Graph ns [DFEdge l], NexcMap l, SimTable l)
 updateNodeConsumptions tick nexcMapF (graph, nexcMap, simTable) node 
-  = trace debug $ (graph', nexcMap', simTable')
+  = (graph', nexcMap', simTable')
   where
-    -- {-
-    debug = "========== updateNodeConsumptions debug ==========" L.++ "\r\n" L.++
-            "tick:            " L.++ (show tick)    L.++ "\r\n" L.++
-            "lbl:             " L.++ (show lbl)     L.++ "\r\n" L.++
-            "nexc:            " L.++ (show nexc)    L.++ "\r\n" L.++
-            "nexc':           " L.++ (show nexc')   L.++ "\r\n" L.++
-            "edgeFireEnables: " L.++ (show edgeFireEnables) L.++ "\r\n" L.++
-            "==================================\r\n"
-    -- -}
     na = name graph
     es = edges graph
     ns = nodes graph
@@ -248,22 +239,8 @@ updateNodeConsumptions tick nexcMapF (graph, nexcMap, simTable) node
 
     nodeStartingORRunning = nexc' >= 0
 
-    edgeCheck edge = trace debug1 $ canFire
-      where
-        -- {-
-        debug1 = "========== edgeCheck debug ==========" L.++ "\r\n" L.++
-                "tick:       " L.++ (show tick)    L.++ "\r\n" L.++
-                "lbl:        " L.++ (show lbl)     L.++ "\r\n" L.++
-                "nexc:       " L.++ (show nexc)    L.++ "\r\n" L.++
-                "nexcP:      " L.++ (show nexcP)    L.++ "\r\n" L.++
-                "edge':      " L.++ (show edge)   L.++ "\r\n" L.++
-                "fcRequired: " L.++ (show fcRequired) L.++ "\r\n" L.++
-                "ipp':       " L.++ (show ipp') L.++ "\r\n" L.++
-                "cp':        " L.++ (show cp') L.++ "\r\n" L.++
-                "ppsnl:      " L.++ (show ppsnl) L.++ "\r\n" L.++
-                "cpsnl:      " L.++ (show cpsnl) L.++ "\r\n" L.++
-                "==================================\r\n"
-        -- -}        
+    edgeCheck edge = canFire
+      where      
         src = source edge
         Just nexcP = M.lookup src nexcMapF -- lookup the nexc of the source node
         -- producingNodeRunning = nexcP >= 0
