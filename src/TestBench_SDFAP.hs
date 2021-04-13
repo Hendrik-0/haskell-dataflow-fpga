@@ -40,3 +40,89 @@ s1 = Graph
   [ hsdfNode "A" 1
   ])
   []
+
+
+dl = drawSchedules "../schedules" [lloyds_3n, lloyds_4n, lloyds_5n, lloyds_5nf]
+
+lloyds_3n = Graph 
+  "lloyds 3n"
+  (M.fromList 
+  [ hsdfNode "1-source1" 3
+  , hsdfNode "1-source2" 3
+  , hsdfNode "2-cluster" 1
+  , hsdfNode "3-center" 1
+  , hsdfNode "4-div" 1
+  , hsdfNode "5-sink" 1
+  ])
+  [ SDFAPEdge "1-source1" "2-cluster" 0 [6,6,6] [18]
+  , SDFAPEdge "1-source2" "2-cluster" 0 [1,1,1] [3]
+  , SDFAPEdge "1-source2" "2-center"  0 [1,1,1] [3]
+  , SDFAPEdge "2-cluster" "3-center"  0 [18]    [18]
+  , SDFAPEdge "3-center"  "4-div"     0 [3]     [3]
+  , SDFAPEdge "4-div"     "5-sink"    0 [3]     [3]
+  ]
+
+
+lloyds_4n = Graph 
+  "lloyds 4n"
+  (M.fromList 
+  [ hsdfNode "1-source1" 3
+  , hsdfNode "1-source2" 3
+  , hsdfNode "2-cluster" 1
+  , hsdfNode "3-csasc" 1
+  , hsdfNode "4-csi" 1
+  , hsdfNode "5-div" 1
+  , hsdfNode "6-sink" 1
+  ])
+  [ SDFAPEdge "1-source1" "2-cluster" 0 [6,6,6] [18]
+  , SDFAPEdge "1-source2" "2-cluster" 0 [1,1,1] [3]
+  , SDFAPEdge "1-source2" "4-csi"     0 [1,1,1] [3]
+  , SDFAPEdge "2-cluster" "3-csasc"   0 [18]    [18]
+  , SDFAPEdge "4-csi"     "3-csasc"   0 [3]     [3]
+  , SDFAPEdge "3-csasc"   "5-div"     0 [3]     [3]
+  , SDFAPEdge "5-div"     "6-sink"    0 [3]     [3]
+  ]
+
+lloyds_5n = Graph 
+  "lloyds 5n"
+  (M.fromList 
+  [ hsdfNode "1-source1" 3
+  , hsdfNode "1-source2" 3
+  , hsdfNode "2-sdist" 1
+  , hsdfNode "3-mins" 1
+  , hsdfNode "4-csasc" 1
+  , hsdfNode "5-csi" 1
+  , hsdfNode "6-div" 1
+  , hsdfNode "7-sink" 1
+  ])
+  [ SDFAPEdge "1-source1" "2-sdist" 0 [6,6,6] [18]
+  , SDFAPEdge "1-source2" "2-sdist" 0 [1,1,1] [3]
+  , SDFAPEdge "1-source2" "5-csi"   0 [1,1,1] [3]
+  , SDFAPEdge "2-sdist"   "3-mins"  0 [54]    [54]
+  , SDFAPEdge "3-mins"    "4-csasc" 0 [18]    [18]
+  , SDFAPEdge "5-csi"     "4-csasc" 0 [3]     [3]
+  , SDFAPEdge "4-csasc"   "6-div"   0 [3]     [3]
+  , SDFAPEdge "6-div"     "7-sink"  0 [3]     [3]
+  ]
+
+lloyds_5nf = Graph 
+  "lloyds 5nf"
+  (M.fromList 
+  [ hsdfNode "1-source1" 3
+  , hsdfNode "1-source2" 3
+  , hsdfNode "2-sdist" 3
+  , hsdfNode "3-mins" 3
+  , hsdfNode "4-csasc" 3
+  , hsdfNode "5-csi" 3
+  , hsdfNode "6-div" 3
+  , hsdfNode "7-sink" 1
+  ])
+  [ SDFAPEdge "1-source1" "2-sdist" 0 [6,6,6]     [6,6,6]
+  , SDFAPEdge "1-source2" "2-sdist" 0 [1,1,1]     [1,1,1]
+  , SDFAPEdge "1-source2" "5-csi"   0 [1,1,1]     [1,1,1]
+  , SDFAPEdge "2-sdist"   "3-mins"  0 [18,18,18]  [18,18,18]
+  , SDFAPEdge "3-mins"    "4-csasc" 0 [6,6,6]     [6,6,6]
+  , SDFAPEdge "5-csi"     "4-csasc" 0 [1,1,1]     [1,1,1]
+  , SDFAPEdge "4-csasc"   "6-div"   0 [1,1,1]     [1,1,1]
+  , SDFAPEdge "6-div"     "7-sink"  0 [1,1,1]     [3]
+  ]  
