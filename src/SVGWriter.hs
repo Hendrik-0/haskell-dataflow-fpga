@@ -26,6 +26,9 @@ import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 import Text.Blaze.Html.Renderer.String
 
+htmlcolors :: [Text]
+htmlcolors = ["aqua","black","blue","fuchsia","gray","green","lime","maroon","navy","olive","purple","red","silver","teal","yellow","white"]
+
 scalar :: RealFloat a => a
 scalar = 15
 
@@ -156,12 +159,14 @@ actorST :: (RealFloat a, Show l) => a -> a -> a -> a -> l -> [(a, a)] -> (a, Ele
 actorST tx y sx h text firings
   = ( lastY
     , txt tx y (0.8*h*scalar) "start" (show text)
-  <> mconcat [rect x y' w' h "green" | (st,et,laneNr) <- coordinateList       -- start time, end time, lane number from coordinate list
-                                    , let x = sx + st                         -- start x of schedule + start time actor
-                                    , let y' = y + h * (fromIntegral laneNr)  -- y of schedule + the number of parallel firings at that specific instance
-                                    , let w = et - st                         -- width = end time - start time actor
-                                    , let w' = if w == 0 then 1/scalar else w -- if execution time is 0, print small line
-                                    ]
+  -- <> mconcat [rect x y' w' h "green" | (st,et,laneNr) <- coordinateList       -- start time, end time, lane number from coordinate list
+  <> mconcat [rect x y' w' h col | (st,et,laneNr) <- coordinateList       -- start time, end time, lane number from coordinate list
+                                  , let x = sx + st                         -- start x of schedule + start time actor
+                                  , let y' = y + h * (fromIntegral laneNr)  -- y of schedule + the number of parallel firings at that specific instance
+                                  , let w = et - st                         -- width = end time - start time actor
+                                  , let w' = if w == 0 then 1/scalar else w -- if execution time is 0, print small line
+                                  , let col = htmlcolors!!(mod (fromIntegral $ floor y) (length htmlcolors))
+                                  ]
     )
   where
     coordinateList = foldl findFirstAvailLaneNr [] firings            -- list with tuple containg start time, end time, and lane number of all the actor firings
@@ -250,11 +255,11 @@ svgStrictlyPeriodicSchedule :: (DFNodes n, Enum a, RealFloat a, Show l, Ord l)
   -> Graph (M.Map l (n l)) [DFEdge l]
   -> IO (Maybe String)
 svgStrictlyPeriodicSchedule canvasWidth rowHeight dirname graph = do
-  if isJust mmap' 
+  if isJust mmap'
     then do writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
     else return ()
-  return (if isJust mmap' 
-            then Just filename 
+  return (if isJust mmap'
+            then Just filename
             else Nothing)
   where
     filename = (name graph ++ " - sp") <.> "svg"
@@ -285,11 +290,11 @@ svgSelfTimedSchedule :: (DFNodes n, Enum a, RealFloat a, Show l, Ord l)
   -> Graph (M.Map l (n l)) [DFEdge l]
   -> IO (Maybe String)
 svgSelfTimedSchedule canvasWidth rowHeight dirname graph = do
-  if isJust mcr 
+  if isJust mcr
     then do writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
     else return ()
-  return (if isJust mcr 
-            then Just filename 
+  return (if isJust mcr
+            then Just filename
             else Nothing) -- if file is existing or not
   where
     filename = (name graph ++ " - st") <.> "svg"
