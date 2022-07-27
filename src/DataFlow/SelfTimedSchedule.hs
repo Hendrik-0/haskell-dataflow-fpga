@@ -20,7 +20,7 @@ selfTimedSchedule :: (Ord l, DFNodes n)
   -> Integer
   -> ((Graph (M.Map l (n l)) [DFEdge l], SimMap l, SimTable l), [SimTable l])
 selfTimedSchedule graph nrOfTicks
-  = if isSDFAP graph 
+  = if isSDFAP graph
       then selfTimedScheduleSDFAP graph nrOfTicks
       else selfTimedSchedule' (graph, simMap, simTable) totalSimTable totalTicks tickStep tick
   where
@@ -54,7 +54,9 @@ selfTimedSchedule' (graph, simMap, simTable) totalSimTable totalTicks tickStep t
 
 
 canNodeFireCount :: (Graphs g, DFEdges e, Eq l) => l -> g ns [e l] -> Int -> Integer
-canNodeFireCount label graph periodCount = minimum edgeConstraints -- minimum determins how many times a node can fire
+canNodeFireCount label graph periodCount = if null edgeConstraints
+                                              then error "no Edge Constraints, does every node have an incomming edge?"
+                                              else minimum edgeConstraints -- minimum determins how many times a node can fire
   where
     etn = edgesToNode label (edges graph)     -- edges to the current node
     edgeConstraints = map allowEdgeFire etn   -- Integers representing how many times an actor can fire accorindg to every edge
@@ -162,7 +164,7 @@ isSDFAP (Graph na ns es) = isSDFAPEdge (es!!0)
     isSDFAPEdge _                       = False
 
 
-selfTimedScheduleSDFAP :: (DFNodes n, Ord l) 
+selfTimedScheduleSDFAP :: (DFNodes n, Ord l)
   => Graph (M.Map l (n l)) [DFEdge l]
   -> Integer
   -> ((Graph (M.Map l (n l)) [DFEdge l], M.Map k a, SimTable l),[SimTable l])
@@ -175,9 +177,9 @@ selfTimedScheduleSDFAP graph nrOfTicks = ((graph', M.empty , simTable'), totalSi
     (graph', nexcMap', simTable') = foldl updateGraphTick (graph, nexcMap, simTable) [0..nrOfTicks]
 
 
-updateGraphTick :: (Foldable t, DFNodes n, Ord l) 
+updateGraphTick :: (Foldable t, DFNodes n, Ord l)
   => (Graph (t (n l)) [DFEdge l], NexcMap l, SimTable l)
-  -> Integer 
+  -> Integer
   -> (Graph (t (n l)) [DFEdge l], NexcMap l, SimTable l)
 updateGraphTick (graph, nexcMap, simTable) tick = (graph', nexcMap', simTable')
   where
@@ -190,8 +192,8 @@ postscanl :: (a -> b -> a) -> a -> [b] -> [a]
 postscanl f z xs = tail (scanl f z xs)
 
 
-updateNodeProductions :: (Nodes n, Ord l) 
-  => NexcMap l 
+updateNodeProductions :: (Nodes n, Ord l)
+  => NexcMap l
   -> Graph ns [DFEdge l] -> n l -> Graph ns [DFEdge l]
 updateNodeProductions nexcMap graph node  | nodeRunning = graph'
                                           | otherwise   = graph
@@ -215,13 +217,13 @@ updateNodeProductions nexcMap graph node  | nodeRunning = graph'
     graph' = (Graph na ns es')
 
 
-updateNodeConsumptions :: (DFNodes n, Ord l) 
+updateNodeConsumptions :: (DFNodes n, Ord l)
   => Integer
   -> M.Map l Int
   -> (Graph ns [DFEdge l], NexcMap l, SimTable l)
   -> n l
   -> (Graph ns [DFEdge l], NexcMap l, SimTable l)
-updateNodeConsumptions tick nexcMapF (graph, nexcMap, simTable) node 
+updateNodeConsumptions tick nexcMapF (graph, nexcMap, simTable) node
   = (graph', nexcMap', simTable')
   where
     na = name graph
@@ -240,7 +242,7 @@ updateNodeConsumptions tick nexcMapF (graph, nexcMap, simTable) node
     nodeStartingORRunning = nexc' >= 0
 
     edgeCheck edge = canFire
-      where      
+      where
         src = source edge
         Just nexcP = M.lookup src nexcMapF -- lookup the nexc of the source node
         -- producingNodeRunning = nexcP >= 0
