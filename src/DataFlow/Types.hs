@@ -98,3 +98,16 @@ produceTokens nr ( HSDFEdge s d t)         =  HSDFEdge s d (t+nr)
 produceTokens nr (  SDFEdge s d t pr  cr ) =   SDFEdge s d (t+nr) pr  cr
 produceTokens nr ( CSDFEdge s d t prv crv) =  CSDFEdge s d (t+nr) prv crv
 produceTokens nr (SDFAPEdge s d t prv crv) = SDFAPEdge s d (t+nr) prv crv
+
+
+fromSDFAPtoSDF graph = Graph na ns es'
+  where
+    ns = nodes graph
+    es = edges graph
+    na = name graph
+
+    es' = (map edgeT es) ++ selfTimedEdges
+    selfTimedEdges = map selfEdge (M.elems ns)
+
+    edgeT e = SDFEdge (source e) (target e) (tokens e) (sum $ production e) (sum $ consumption e)
+    selfEdge n = SDFEdge (label n) (label n) 1 1 1
