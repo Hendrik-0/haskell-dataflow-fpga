@@ -13,7 +13,9 @@ import Data.Maybe
 
 
 -- SPS provides maybe a M.Map with the node label as key, and a tuple with (startTime, period)
-strictlyPeriodicSchedule :: (DFEdges e, Ord l, DFNodes n, Eq (e l))
+strictlyPeriodicSchedule :: (DFEdges e, Ord l, DFNodes n, Eq (e l)
+  -- , Show l, Show (e l)
+  )
   => Graph (M.Map l (n l)) [e l]
   -> Maybe (M.Map l (Ratio Integer, Ratio Integer))
 strictlyPeriodicSchedule graph
@@ -35,7 +37,9 @@ strictlyPeriodicSchedule graph
           s' = s + mcr*((m%qi) -1)
           p = mcr * (m%qi)
 
-strictlyPeriodicScheduleWithExTime :: (DFEdges e, Ord l, DFNodes n, Eq (e l))
+strictlyPeriodicScheduleWithExTime :: (DFEdges e, Ord l, DFNodes n, Eq (e l)
+  -- , Show l, Show (e l)
+  )
   => Graph (M.Map l (n l)) [e l]
   -> Maybe (M.Map l (Ratio Integer, Ratio Integer, Integer))
 strictlyPeriodicScheduleWithExTime graph

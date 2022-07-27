@@ -15,7 +15,9 @@ import Debug.Trace
 {-
     MaxCycleRatio
 -}
-maxCycleRatio :: (Ord l, DFNodes n, DFEdges e)
+maxCycleRatio :: (Ord l, DFNodes n, DFEdges e
+  -- , Show l, Show (e l)
+  )
   => Graph (M.Map l (n l)) [e l]
   -> (Maybe Weight, Maybe [Edge l])
 maxCycleRatio g
@@ -32,7 +34,9 @@ maxCycleRatio g
       (ratio,cycle)       = foldl1 max' $ zip (map maxCycleRatioFromParametricCycle cycles) cycles       -- if initial tree already contains a cycle, this is the MCR
       max' s@(r1,_) t@(r2,_) = if r1 > r2 then s else t
 
-maxCycleRatioFromParametricCycle :: ParametricEdges e
+maxCycleRatioFromParametricCycle :: (ParametricEdges e
+  -- , Show l
+  )
   => [e l]
   -> Maybe Weight
 maxCycleRatioFromParametricCycle c
@@ -41,7 +45,9 @@ maxCycleRatioFromParametricCycle c
     where
       (tokens, w) = sum $ map pdistance c
 
-maxCycleRatioR :: (Ord l, Eq (e l), ParametricEdges e)
+maxCycleRatioR :: (Ord l, Eq (e l), ParametricEdges e
+  -- , Show l, Show (e l)
+  )
   => l
   -> [e l]
   -> [e l]
@@ -97,7 +103,9 @@ isAncestor es s d = length l > 0 || s == d -- path to source, or selfedge
     Computes for which value of lambda the distance from a to b via
     edge (a, b) becomes larger than the current distance to b.
 -}
-edgeKey :: (ParametricEdges e, Ord l)
+edgeKey :: (ParametricEdges e, Ord l
+  -- , Show l, Show (e l)
+  )
   => (M.Map l ParametricDistance)
   -> e l
   -> Maybe Weight
