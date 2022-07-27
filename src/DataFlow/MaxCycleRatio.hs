@@ -60,7 +60,7 @@ maxCycleRatioR root candidates spTree
     pmapSpTree           = pmapAndSpanningTree spTree root 1                  -- Either returns a spanningTree (Right) or a list of cycles (Left)
     Left cycles          = pmapSpTree                                         -- This should never occur, since the incomming tree never has a cycle
     Right (pmap,_)       = pmapSpTree                                         -- pmap contains all the start keys of all the nodes
-    edgeKeys             = zip (map (edgeKey pmap) candidates) candidates     -- edgeKeys is a list with all the calculated lambda's zipped with their corresponding edge.
+    edgeKeys             = zip (map (edgeKeyM pmap) candidates) candidates     -- edgeKeys is a list with all the calculated lambda's zipped with their corresponding edge.
     (es, _)              = partition (\(a, b) -> isJust a) edgeKeys           -- remove the Nothings from the list. so es contains the list of tuples with lambda
     (Just lambda, pivot) = maximumBy orderTuples es                           -- take the max of the tuplelist, so take the largest lambda and the corresponding edge (pivot)
     (v, w)               = (source pivot, target pivot)                       -- source and destination of the pivot edge
@@ -103,19 +103,36 @@ isAncestor es s d = length l > 0 || s == d -- path to source, or selfedge
     Computes for which value of lambda the distance from a to b via
     edge (a, b) becomes larger than the current distance to b.
 -}
-edgeKey :: (ParametricEdges e, Ord l
+-- Non Monad version of edgeKey
+--
+-- edgeKey :: (ParametricEdges e, Ord l
+--   -- , Show l, Show (e l)
+--   )
+--   => (M.Map l ParametricDistance)
+--   -> e l
+--   -> Maybe Weight
+-- edgeKey pmap edge
+--     | deltaTokens > 0 = Just (w / (deltaTokens % 1)) -- w = Ratio, so division is fine
+--     | otherwise       = Nothing
+--     where
+--       Just (pdistSource) = M.lookup (source edge) pmap
+--       Just (pdistTarget) = M.lookup (target edge) pmap
+--       (deltaTokens, w)   = pdistSource + pdistance edge - pdistTarget -- is the sign still working properly (mark is stored as postive number, ex (7-λ) = (1,7)
+-- Monad version of edgeKey
+edgeKeyM :: (ParametricEdges e, Ord l
   -- , Show l, Show (e l)
   )
   => (M.Map l ParametricDistance)
   -> e l
   -> Maybe Weight
-edgeKey pmap edge
-    | deltaTokens > 0 = Just (w / (deltaTokens % 1)) -- w = Ratio, so division is fine
-    | otherwise       = Nothing
-    where
-      Just (pdistSource) = M.lookup (source edge) pmap
-      Just (pdistTarget) = M.lookup (target edge) pmap
-      (deltaTokens, w)   = pdistSource + pdistance edge - pdistTarget -- is the sign still working properly (mark is stored as postive number, ex (7-λ) = (1,7)
+edgeKeyM pmap edge = do
+  pdistSource <- M.lookup (source edge) pmap
+  pdistTarget <- M.lookup (target edge) pmap
+  let (deltaTokens, w)   = pdistSource + pdistance edge - pdistTarget -- is the sign still working properly (mark is stored as postive number, ex (7-λ) = (1,7)
+  if deltaTokens > 0
+    then Just (w / (deltaTokens % 1)) -- w = Ratio, so division is fine
+    else Nothing
+
 
 {-
     evalEdges evaluates a list of parametric edges with some multiplier l
