@@ -155,7 +155,10 @@ columnLines x y h endX startCount stepSize
 -- firings: list of tuples with (startTime, endTime) of every fire instance
 -- produces an Element containing the textbox with label, and one or more lanes with the schedule.
 -- because the drawing could be on multiple lanes, the function also provides the amount of lanes needed
-actorST :: (RealFloat a, Show l) => a -> a -> a -> a -> l -> [(a, a)] -> (a, Element)
+actorST :: (RealFloat a, Show l
+  -- , Show a
+  )
+  => a -> a -> a -> a -> l -> [(a, a)] -> (a, Element)
 actorST tx y sx h text firings
   = ( lastY
     , txt tx y (0.8*h*scalar) "start" (show text)
@@ -170,7 +173,7 @@ actorST tx y sx h text firings
     )
   where
     coordinateList = foldl findFirstAvailLaneNr [] firings            -- list with tuple containg start time, end time, and lane number of all the actor firings
-    largestLaneNr = maximum $ map (\(_,_, ln) -> ln) coordinateList   -- the amount of lanes used for this actor
+    largestLaneNr = {- trace (show coordinateList) $ -} maximum $ map (\(_,_, ln) -> ln) coordinateList   -- the amount of lanes used for this actor
     lastY = y + h * (1+fromIntegral largestLaneNr) -- the amount of lanes needed for this actor + 1 times the heigth is the lastY
 
     findFirstAvailLaneNr simTable (cst, cet) = simTable ++ [(cst, cet, firstLaneNotTaken)]
@@ -186,7 +189,9 @@ actorST tx y sx h text firings
 -- simTable: simulation table, continging a list of tuples with (label, startTime, endTime)
 -- y: starting coordinate, if schedule spans over multiple lanes, the y' is the resulting y coordinate
 -- node: node to draw the schedule for
-actorST' :: (Nodes n, RealFloat a, Eq l, Show l)
+actorST' :: (Nodes n, RealFloat a, Eq l, Show l
+  , Show a
+  )
   => a -> a -> a
   -> [(l, a, a)]
   -> a
@@ -209,7 +214,10 @@ actorST' tx sx h simTable y node = (y', element)
 -- simTable: the simulation table for which a schedule must be drawn, containing tuples with: (label, startTime, endTime) of every firing instance
 -- ns : nodes of the graph
 -- clStepSize: step size of the column lines.
-actorsST :: (DFNodes n, Enum a, RealFloat a, Eq l, Show l, Show k) => a -> a -> a -> a
+actorsST :: (DFNodes n, Enum a, RealFloat a, Eq l, Show l, Show k
+  , Show a
+  )
+  => a -> a -> a -> a
   -> [(l, a, a)]
   -> M.Map k (n l)
   -> a
@@ -248,7 +256,9 @@ spsMmapToSimTable mmap endX = simTable
 -- rowHeight: the height of each row in the schedule
 -- endX: x-coordinate of right side of the schedule
 -- graph: the graph
-svgStrictlyPeriodicSchedule :: (DFNodes n, Enum a, RealFloat a, Show l, Ord l)
+svgStrictlyPeriodicSchedule :: (DFNodes n, Enum a, RealFloat a, Show l, Ord l
+  , Show a
+  )
   => a
   -> a
   -> String
@@ -283,7 +293,9 @@ svgStrictlyPeriodicSchedule canvasWidth rowHeight dirname graph = do
 -- rowHeight: the height of each row in the schedule
 -- endX: x-coordinate of right side of the schedule
 -- graph: the graph
-svgSelfTimedSchedule :: (DFNodes n, Enum a, RealFloat a, Show l, Ord l)
+svgSelfTimedSchedule :: (DFNodes n, Enum a, RealFloat a, Show l, Ord l
+  , Show a
+  )
   => a
   -> a
   -> String
