@@ -46,8 +46,32 @@ s1 = Graph
 -----------------------------------------------------------------------------------------
 -- Some Test graphs
 -----------------------------------------------------------------------------------------
+draw a = drawSchedules "../schedules" [a]
 
 drawtgap = drawSchedules "../schedules" [tgap, tgapih, tgaph]
+
+drawtg' = drawSchedules "../schedules" $ map fromSDFAPtoSDF [tgap, tgapih, tgaph]
+
+tg = fromSDFAPtoSDF tgap
+
+tgap' = Graph
+  "sdf version"
+    (M.fromList
+  [ hsdfNode "a" 1
+  , hsdfNode "b" 1
+  , hsdfNode "c" 1
+  , hsdfNode "d" 1
+  , hsdfNode "e" 1
+  , hsdfNode "sa" 4
+  , hsdfNode "sd" 4
+  ])
+  [ SDFEdge "a" "b" 0 4 1
+  , SDFEdge "b" "c" 0 2 3
+  , SDFEdge "d" "c" 0 3 1
+  , SDFEdge "c" "e" 0 1 3
+  , SDFEdge "sa" "a" 0 1 1 -- slow down a
+  , SDFEdge "sd" "d" 0 1 1 -- slow down d
+  ]
 
 
 tgap = Graph
@@ -97,82 +121,81 @@ tgapih = Graph
 
 
 
-drawtg = drawSchedules "../schedules" [tg, tgih, tgh]
+-- drawtg = drawSchedules "../schedules" [tg, tgih, tgh]
 
 
-draw a = drawSchedules "../schedules" [a]
 
-tg = Graph
-  "sdf version"
-    (M.fromList
-  [ hsdfNode "I" 0
-  , hsdfNode "a" 1
-  , hsdfNode "b" 1
-  , hsdfNode "c" 1
-  , hsdfNode "d" 1
-  , hsdfNode "e" 1
-  , hsdfNode "Z" 0
-  ])
-  [ SDFEdge "a" "a" 1 1 1
-  , SDFEdge "b" "b" 1 1 1
-  , SDFEdge "c" "c" 1 1 1
-  , SDFEdge "d" "d" 1 1 1
-  , SDFEdge "e" "e" 1 1 1
+-- tg = Graph
+--   "sdf version"
+--     (M.fromList
+--   [ hsdfNode "I" 0
+--   , hsdfNode "a" 1
+--   , hsdfNode "b" 1
+--   , hsdfNode "c" 1
+--   , hsdfNode "d" 1
+--   , hsdfNode "e" 1
+--   , hsdfNode "Z" 0
+--   ])
+--   [ SDFEdge "a" "a" 1 1 1
+--   , SDFEdge "b" "b" 1 1 1
+--   , SDFEdge "c" "c" 1 1 1
+--   , SDFEdge "d" "d" 1 1 1
+--   , SDFEdge "e" "e" 1 1 1
 
-  , SDFEdge "I" "a" 0 1 1
-  , SDFEdge "I" "d" 0 1 1
+--   , SDFEdge "I" "a" 0 1 1
+--   , SDFEdge "I" "d" 0 1 1
 
-  , SDFEdge "a" "b" 0 3 1
-  , SDFEdge "b" "c" 0 2 3
-  , SDFEdge "d" "c" 0 2 1
-  , SDFEdge "c" "e" 0 1 2
+--   , SDFEdge "a" "b" 0 3 1
+--   , SDFEdge "b" "c" 0 2 3
+--   , SDFEdge "d" "c" 0 2 1
+--   , SDFEdge "c" "e" 0 1 2
 
-  , SDFEdge "e" "Z" 0 1 1
-  , SDFEdge "Z" "I" 1 1 1
-  ]
+--   , SDFEdge "e" "Z" 0 1 1
+--   , SDFEdge "Z" "I" 1 1 1
+--   ]
 
-tgih = Graph
-  "sdf version inside hierarchy"
-    (M.fromList
-  [ hsdfNode "I" 0
-  , hsdfNode "b" 1
-  , hsdfNode "c" 1
-  , hsdfNode "Z" 0
-  ])
-  [ SDFEdge "b" "b" 1 1 1
-  , SDFEdge "c" "c" 1 1 1
-  , SDFEdge "I" "b" 0 3 1
-  , SDFEdge "I" "c" 0 2 1
-  , SDFEdge "b" "c" 0 2 3
-  , SDFEdge "c" "Z" 0 1 2
-  , SDFEdge "Z" "I" 1 1 1
-  ]
+-- tgih = Graph
+--   "sdf version inside hierarchy"
+--     (M.fromList
+--   [ hsdfNode "I" 0
+--   , hsdfNode "b" 1
+--   , hsdfNode "c" 1
+--   , hsdfNode "Z" 0
+--   ])
+--   [ SDFEdge "b" "b" 1 1 1
+--   , SDFEdge "c" "c" 1 1 1
+--   , SDFEdge "I" "b" 0 3 1
+--   , SDFEdge "I" "c" 0 2 1
+--   , SDFEdge "b" "c" 0 2 3
+--   , SDFEdge "c" "Z" 0 1 2
+--   , SDFEdge "Z" "I" 1 1 1
+--   ]
 
-tgh = Graph
-  "sdf version with hierarchy"
-    (M.fromList
-  [ hsdfNode "I" 0
-  , hsdfNode "a" 1
-  , hsdfNode "bc" 4
-  , hsdfNode "d" 1
-  , hsdfNode "e" 1
-  , hsdfNode "Z" 0
-  ])
-  [ SDFEdge "a" "a" 1 1 1
-  , SDFEdge "bc" "bc" 1 1 1
-  , SDFEdge "d" "d" 1 1 1
-  , SDFEdge "e" "e" 1 1 1
+-- tgh = Graph
+--   "sdf version with hierarchy"
+--     (M.fromList
+--   [ hsdfNode "I" 0
+--   , hsdfNode "a" 1
+--   , hsdfNode "bc" 4
+--   , hsdfNode "d" 1
+--   , hsdfNode "e" 1
+--   , hsdfNode "Z" 0
+--   ])
+--   [ SDFEdge "a" "a" 1 1 1
+--   , SDFEdge "bc" "bc" 1 1 1
+--   , SDFEdge "d" "d" 1 1 1
+--   , SDFEdge "e" "e" 1 1 1
 
-  , SDFEdge "I" "d" 0 1 1
-  , SDFEdge "I" "a" 0 1 1
+--   , SDFEdge "I" "d" 0 1 1
+--   , SDFEdge "I" "a" 0 1 1
 
-  , SDFEdge "a" "bc" 0 3 3
-  , SDFEdge "d" "bc" 0 2 2
-  , SDFEdge "bc" "e" 0 2 1
+--   , SDFEdge "a" "bc" 0 3 3
+--   , SDFEdge "d" "bc" 0 2 2
+--   , SDFEdge "bc" "e" 0 2 1
 
-  , SDFEdge "e" "Z" 0 1 2
-  , SDFEdge "Z" "I" 1 1 1
-  ]
+--   , SDFEdge "e" "Z" 0 1 2
+--   , SDFEdge "Z" "I" 1 1 1
+--   ]
 
 
 -----------------------------------------------------------------------------------------
