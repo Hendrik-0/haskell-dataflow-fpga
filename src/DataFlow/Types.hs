@@ -100,11 +100,11 @@ produceTokens nr ( CSDFEdge s d t prv crv) =  CSDFEdge s d (t+nr) prv crv
 produceTokens nr (SDFAPEdge s d t prv crv) = SDFAPEdge s d (t+nr) prv crv
 
 
-fromSDFAPtoSDF graph = Graph na ns es'
+fromSDFAPtoSDF graph = Graph na' ns es'
   where
     ns = nodes graph
     es = edges graph
-    na = name graph
+    na' = "SDF:" ++ name graph
 
     es' = (map edgeT es) ++ selfTimedEdges
     selfTimedEdges = map selfEdge (M.elems ns)
