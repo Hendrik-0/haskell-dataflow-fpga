@@ -290,12 +290,14 @@ svgSelfTimedSchedule :: (DFNodes n, Enum a, RealFloat a, Show l, Ord l)
   -> Graph (M.Map l (n l)) [DFEdge l]
   -> IO (Maybe String)
 svgSelfTimedSchedule canvasWidth rowHeight dirname graph = do
-  if isJust mcr
-    then do writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
-    else return ()
-  return (if isJust mcr
-            then Just filename
-            else Nothing) -- if file is existing or not
+  writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
+  -- if isJust mcr
+  --   then do writeFile (joinPath [dirname, filename]) (show $ svg canvasWidth canvasHeight scheduleElement)
+  --   else return ()
+  -- return (if isJust mcr
+  --           then Just filename
+  --           else Nothing) -- if file is existing or not
+  return (Just filename)
   where
     filename = (name graph ++ " - st") <.> "svg"
 
@@ -304,9 +306,9 @@ svgSelfTimedSchedule canvasWidth rowHeight dirname graph = do
     startY = rowHeight -- after text
     (lastY, scheduleElement) = actorsST startX startY rowHeight canvasWidth simTable ns clStepSize
     canvasHeight = scalar * lastY
-    (mcr, _) =  if isSDFAP graph
-                  then (Just 0, Nothing) -- TODO: mcr calculation not available yet for SDFAP
-                  else maxCycleRatio $ singleRateApx graph
+    -- (mcr, _) =  if isSDFAP graph
+    --               then (Just 0, Nothing) -- TODO: mcr calculation not available yet for SDFAP
+    --               else maxCycleRatio $ singleRateApx graph
     ticks = div (fromIntegral $ round canvasWidth) (fromIntegral $ round scalar)  -- number of ticks to be sufficient to fill the entire canvassize
     simTableST =  concat $ snd $ selfTimedSchedule graph ticks                     -- simTable comming from selfTimedSchedule function
     simTable = map (\(lbl, _, stI, etI) -> (lbl, fromInteger stI, fromInteger etI)) simTableST -- remove periodCount, change Integers to RealFrac
